@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSesionesRealtime } from "@/hooks/useSesionesRealtime";
 import {
   Monitor,
   Smartphone,
@@ -25,37 +26,52 @@ type Sesion = {
   actual: boolean;
 };
 
+type SesionEvento = {
+  tipo:
+    | "SESION_CREADA"
+    | "SESION_CERRADA"
+    | "SESION_EXPIRADA"
+    | "SESIONES_ACTUALIZADAS"
+    | string;
+  mensaje?: string;
+  idSesion?: number;
+  idUsuario?: number;
+};
+
 export default function SesionesPage() {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [closingId, setClosingId] = useState<number | null>(null);
 
-  const obtenerSesiones = async (silent = false, showToast = false) => {
-    try {
-      if (silent) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const obtenerSesiones = useCallback(
+    async (silent = false, showToast = false) => {
+      try {
+        if (silent) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      const res = await api.get("/sesiones/activas-v2");
-      setSesiones(res.data);
+        const res = await api.get("/sesiones/activas-v2");
+        setSesiones(res.data);
 
-      if (showToast) {
-        toast.info("Sesiones actualizadas", {
-          description: "La lista de dispositivos conectados fue actualizada.",
+        if (showToast) {
+          toast.info("Sesiones actualizadas", {
+            description: "La lista de dispositivos conectados fue actualizada.",
+          });
+        }
+      } catch {
+        toast.error("No se pudieron cargar las sesiones", {
+          description: "Intenta nuevamente o revisa tu conexión.",
         });
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch {
-      toast.error("No se pudieron cargar las sesiones", {
-        description: "Intenta nuevamente o revisa tu conexión.",
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    },
+    []
+  );
 
   const cerrarSesion = async (sesion: Sesion) => {
     if (sesion.actual) return;
@@ -105,6 +121,36 @@ export default function SesionesPage() {
       mounted = false;
     };
   }, []);
+
+  const manejarEventoSesion = useCallback(
+    async (evento: SesionEvento) => {
+      await obtenerSesiones(true, false);
+
+      if (evento.tipo === "SESION_CREADA") {
+        toast.info("Nueva sesión detectada", {
+          description: "Se inició sesión desde otro dispositivo.",
+        });
+        return;
+      }
+
+      if (evento.tipo === "SESION_EXPIRADA") {
+        toast.info("Una sesión expiró", {
+          description: "La lista de dispositivos conectados fue actualizada.",
+        });
+        return;
+      }
+
+      if (evento.tipo === "SESION_CERRADA") {
+        return;
+      }
+    },
+    [obtenerSesiones]
+  );
+
+  useSesionesRealtime({
+    enabled: true,
+    onEvento: manejarEventoSesion,
+  });
 
   const formatearFecha = (fecha: string) =>
     fecha

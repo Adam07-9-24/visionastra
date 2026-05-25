@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
 import { ModeToggle } from "@/components/mode-toggle";
 import ColorModal from "@/components/ColorModal";
 import VisionAstraLogo from "@/components/branding/VisionAstraLogo";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useSilentRefresh } from "@/hooks/useSilentRefresh";
-import { Navigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Shield,
+  Megaphone,
   ChevronLeft,
   ChevronRight,
   Palette,
@@ -17,31 +17,42 @@ import {
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/sesiones", label: "Sesiones", icon: Shield },
+  { to: "/campanas", label: "Campañas", icon: Megaphone },
 ];
 
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [openColor, setOpenColor] = useState(false);
 
+  const location = useLocation();
   const token = localStorage.getItem("token");
 
-  useHeartbeat(); // ✅ SIEMPRE ARRIBA
+  useHeartbeat();
   useSilentRefresh();
+
+  useEffect(() => {
+    const main = document.getElementById("main-scroll");
+
+    main?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [location.pathname]);
 
   if (!token) {
     return <Navigate to="/login" />;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* ── HEADER ── */}
-      <header className="h-16 border-b flex items-center justify-between px-6 bg-background/80 backdrop-blur-md shrink-0 z-10">
-        {/* 🔥 LOGO PRO */}
+      <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            paddingLeft: "18px", // 🔥 alineado con sidebar
+            paddingLeft: "18px",
             gap: "10px",
             marginBottom: "4px",
           }}
@@ -49,7 +60,6 @@ export default function MainLayout() {
           <VisionAstraLogo size={40} showText={true} />
         </div>
 
-        {/* CONTROLES */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <ModeToggle />
 
@@ -77,7 +87,14 @@ export default function MainLayout() {
       </header>
 
       {/* ── BODY ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div
+        style={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         {/* ── SIDEBAR ── */}
         <aside
           style={{
@@ -109,7 +126,6 @@ export default function MainLayout() {
               padding: "24px 0",
             }}
           >
-            {/* Label */}
             {!collapsed && (
               <p
                 style={{
@@ -126,7 +142,6 @@ export default function MainLayout() {
               </p>
             )}
 
-            {/* NAV */}
             <nav
               style={{
                 display: "flex",
@@ -160,7 +175,6 @@ export default function MainLayout() {
                       }}
                       className={!isActive ? "hover:bg-muted/60" : ""}
                     >
-                      {/* Barra activa */}
                       {isActive && !collapsed && (
                         <div
                           style={{
@@ -176,7 +190,6 @@ export default function MainLayout() {
                         />
                       )}
 
-                      {/* Glow */}
                       {isActive && (
                         <div
                           style={{
@@ -190,7 +203,6 @@ export default function MainLayout() {
                         />
                       )}
 
-                      {/* Icono */}
                       <div
                         style={{
                           width: "36px",
@@ -212,7 +224,6 @@ export default function MainLayout() {
                         <Icon size={17} />
                       </div>
 
-                      {/* Texto */}
                       {!collapsed && (
                         <span
                           style={{
@@ -263,7 +274,15 @@ export default function MainLayout() {
 
         {/* ── MAIN ── */}
         <main
-          style={{ flex: 1, overflowY: "auto", padding: "40px" }}
+          id="main-scroll"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            overflowY: "auto",
+            padding: "40px",
+            position: "relative",
+          }}
           className="bg-background"
         >
           <Outlet />

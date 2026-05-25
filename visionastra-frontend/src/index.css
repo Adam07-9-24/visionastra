@@ -158,5 +158,11 @@ body,
   body {
     @apply bg-background text-foreground min-h-screen;
     transition: background-color 0.2s ease, color 0.2s ease;
+    overflow: hidden;
+  }
+}
+@media (min-width: 1024px) {
+  .campana-row-grid {
+    grid-template-columns: 1.5fr 140px 190px 260px;
   }
 }

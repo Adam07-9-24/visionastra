@@ -4,6 +4,7 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 import SesionesPage from "./pages/sesiones/SesionesPage";
 import LoginPage from "./pages/LoginPage"; // 🔥 NUEVO
 import { Toaster } from "@/components/ui/sonner";
+import CampanasPage from "@/pages/campanas/CampanasPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sesiones" element={<SesionesPage />} />
+          <Route path="/campanas" element={<CampanasPage />} />
         </Route>
       </Routes>
 
