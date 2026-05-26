@@ -5,6 +5,7 @@ import SesionesPage from "./pages/sesiones/SesionesPage";
 import LoginPage from "./pages/LoginPage"; // 🔥 NUEVO
 import { Toaster } from "@/components/ui/sonner";
 import CampanasPage from "@/pages/campanas/CampanasPage";
+import RecursosPage from "./pages/recursos/RecursosPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sesiones" element={<SesionesPage />} />
           <Route path="/campanas" element={<CampanasPage />} />
+          <Route path="/recursos" element={<RecursosPage />} />
         </Route>
       </Routes>
 

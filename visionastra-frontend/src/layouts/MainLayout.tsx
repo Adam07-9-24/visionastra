@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Shield,
   Megaphone,
+  FolderOpen,
   ChevronLeft,
   ChevronRight,
   Palette,
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/sesiones", label: "Sesiones", icon: Shield },
   { to: "/campanas", label: "Campañas", icon: Megaphone },
+  { to: "/recursos", label: "Recursos", icon: FolderOpen },
 ];
 
 export default function MainLayout() {
