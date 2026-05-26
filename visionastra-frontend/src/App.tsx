@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import SesionesPage from "./pages/sesiones/SesionesPage";
-import LoginPage from "./pages/LoginPage"; // 🔥 NUEVO
+import LoginPage from "./pages/LoginPage";
 import { Toaster } from "@/components/ui/sonner";
 import CampanasPage from "@/pages/campanas/CampanasPage";
 
