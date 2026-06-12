@@ -58,17 +58,17 @@ const estadoLabel: Record<EstadoCampana | "todas", string> = {
 };
 
 const estadoStyles: Record<EstadoCampana, string> = {
-  borrador: "border-slate-500/25 bg-slate-500/10 text-slate-300/90",
-  activa: "border-emerald-500/25 bg-emerald-500/10 text-emerald-300/90",
-  pausada: "border-amber-500/25 bg-amber-500/10 text-amber-300/90",
-  finalizada: "border-sky-500/25 bg-sky-500/10 text-sky-300/90",
+  borrador: "border-border bg-card text-muted-foreground",
+  activa: "border-primary/20 bg-primary/5 text-primary",
+  pausada: "border-border bg-muted text-muted-foreground",
+  finalizada: "border-border bg-card text-muted-foreground",
 };
 
 const estadoDot: Record<EstadoCampana, string> = {
-  borrador: "bg-slate-300",
-  activa: "bg-emerald-300",
-  pausada: "bg-amber-300",
-  finalizada: "bg-sky-300",
+  borrador: "bg-current",
+  activa: "bg-current",
+  pausada: "bg-current",
+  finalizada: "bg-current",
 };
 
 const formInicial: CampanaRequest = {
@@ -86,7 +86,7 @@ const inputClass =
   "placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10";
 
 const textareaClass =
-  "min-h-[86px] w-full resize-none rounded-lg border border-border/70 bg-background/70 px-3 py-2 text-sm text-foreground outline-none transition " +
+  "min-h-[74px] w-full resize-none rounded-lg border border-border/70 bg-background/70 px-3 py-2 text-sm text-foreground outline-none transition " +
   "placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10";
 
 const fechaInputValue = (fecha: string | null | undefined): string => {
@@ -94,8 +94,9 @@ const fechaInputValue = (fecha: string | null | undefined): string => {
   return fecha.slice(0, 10);
 };
 
-const actionButtonClass = "h-7 min-w-[82px] rounded-md px-2 text-[11px]";
-const actionIconClass = "mr-1 h-3 w-3";
+const actionButtonClass =
+  "h-7 shrink-0 rounded-md px-2.5 text-[11px] leading-none";
+const actionIconClass = "mr-1.5 h-3 w-3 shrink-0";
 
 export default function CampanasPage() {
   const [campanas, setCampanas] = useState<Campana[]>([]);
@@ -481,7 +482,8 @@ export default function CampanasPage() {
       });
     } catch {
       toast.error("No se pudo eliminar la campaña", {
-        description: "Intenta nuevamente o revisa tu conexión.",
+        description:
+          "Verifica que la campaña no tenga recursos asociados o revisa tu conexión.",
       });
     } finally {
       setEliminandoId(null);
@@ -514,9 +516,9 @@ export default function CampanasPage() {
       valor: resumen.activas.toString(),
       descripcion: "En ejecución",
       icono: <Target size={20} />,
-      color: "#10b981",
-      bg: "color-mix(in srgb, #10b981 12%, transparent)",
-      border: "color-mix(in srgb, #10b981 25%, transparent)",
+      color: "var(--primary)",
+      bg: "color-mix(in srgb, var(--primary) 12%, transparent)",
+      border: "color-mix(in srgb, var(--primary) 25%, transparent)",
       compacto: false,
     },
     {
@@ -524,19 +526,19 @@ export default function CampanasPage() {
       valor: resumen.borradores.toString(),
       descripcion: "Pendientes",
       icono: <CalendarDays size={20} />,
-      color: "#f59e0b",
-      bg: "color-mix(in srgb, #f59e0b 12%, transparent)",
-      border: "color-mix(in srgb, #f59e0b 25%, transparent)",
+      color: "var(--muted-foreground)",
+      bg: "color-mix(in srgb, var(--muted-foreground) 12%, transparent)",
+      border: "color-mix(in srgb, var(--muted-foreground) 25%, transparent)",
       compacto: false,
     },
     {
       titulo: "Presupuesto activo",
       valor: formatearMoneda(resumen.presupuestoTotal),
       descripcion: "Sin contar finalizadas",
-      icono: <CircleDollarSign size={20} />,
-      color: "#a78bfa",
-      bg: "color-mix(in srgb, #a78bfa 12%, transparent)",
-      border: "color-mix(in srgb, #a78bfa 25%, transparent)",
+      icono: <CircleDollarSign size={20} className="text-green-500" />,
+      color: "var(--foreground)",
+      bg: "color-mix(in srgb, var(--foreground) 8%, transparent)",
+      border: "color-mix(in srgb, var(--foreground) 18%, transparent)",
       compacto: true,
     },
   ];
@@ -552,7 +554,7 @@ export default function CampanasPage() {
     <div
       style={{
         width: "100%",
-        maxWidth: "1120px",
+        maxWidth: "1240px",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
@@ -568,28 +570,12 @@ export default function CampanasPage() {
             gap: 8px;
           }
 
-          .campanas-detalles-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-
-          @media (min-width: 640px) {
-            .campanas-detalles-grid {
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-          }
-
           @media (min-width: 1024px) {
             .campanas-table-header,
             .campanas-table-row {
-              grid-template-columns: minmax(0, 1.25fr) 150px 120px 360px;
+              grid-template-columns: minmax(0, 1fr) 145px 118px minmax(430px, 0.95fr);
               align-items: center;
               gap: 12px;
-            }
-
-            .campanas-detalles-grid {
-              grid-template-columns: repeat(4, minmax(0, 1fr));
             }
           }
         `}
@@ -868,11 +854,11 @@ export default function CampanasPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="campanas-table-header hidden rounded-lg border border-border/50 bg-muted/20 py-1.5 pl-4 pr-6 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/55 lg:grid">
+              <div className="campanas-table-header hidden rounded-lg border border-border/50 bg-muted/20 py-1.5 pl-4 pr-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/55 lg:grid">
                 <span>Campaña</span>
                 <span>Presupuesto</span>
                 <span>Estado</span>
-                <span className="pl-2 text-left">Acciones</span>
+                <span className="text-left">Acciones</span>
               </div>
 
               {campanasFiltradas.map((campana) => {
@@ -882,9 +868,13 @@ export default function CampanasPage() {
                 return (
                   <article
                     key={campana.idCampana}
-                    className="overflow-hidden rounded-lg border border-border/60 bg-background/35 transition hover:border-primary/35 hover:bg-background/55"
+                    className={`overflow-hidden rounded-lg border border-l-4 transition ${
+                      detallesAbiertos
+                        ? "mb-4 border-primary/20 border-l-primary bg-primary/5"
+                        : "border-border/60 border-l-transparent bg-card hover:border-primary/35 hover:bg-primary/5"
+                    }`}
                   >
-                    <div className="campanas-table-row py-2.5 pl-4 pr-6">
+                    <div className="campanas-table-row py-2.5 pl-4 pr-4">
                       <div className="min-w-0">
                         <h3 className="truncate text-[15px] font-semibold leading-5 text-foreground">
                           {campana.nombre || "Campaña sin nombre"}
@@ -924,23 +914,23 @@ export default function CampanasPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-start gap-1.5 lg:flex-nowrap lg:justify-start lg:pl-2">
+                      <div className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 lg:justify-start">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => toggleDetalles(campana.idCampana)}
-                          className={`${actionButtonClass} border-border/60`}
+                          className={`${actionButtonClass} min-w-[116px] border-border/60`}
                         >
                           {detallesAbiertos ? (
                             <>
                               <ChevronUp className={actionIconClass} />
-                              Ocultar
+                              Ocultar detalles
                             </>
                           ) : (
                             <>
                               <ChevronDown className={actionIconClass} />
-                              Detalles
+                              Ver detalles
                             </>
                           )}
                         </Button>
@@ -957,7 +947,7 @@ export default function CampanasPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => abrirEditar(campana)}
-                            className={`${actionButtonClass} border-border/60 text-muted-foreground hover:text-foreground`}
+                            className={`${actionButtonClass} min-w-[76px] border-border/60 text-muted-foreground hover:text-foreground`}
                           >
                             <Edit3 className={actionIconClass} />
                             Editar
@@ -970,7 +960,7 @@ export default function CampanasPage() {
                           size="sm"
                           onClick={() => void handleEliminar(campana.idCampana)}
                           disabled={eliminandoId === campana.idCampana}
-                          className={`${actionButtonClass} border-destructive/25 text-destructive/75 hover:bg-destructive/10 hover:text-destructive`}
+                          className={`${actionButtonClass} min-w-[96px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive`}
                         >
                           <Trash2 className={actionIconClass} />
                           Eliminar
@@ -979,46 +969,54 @@ export default function CampanasPage() {
                     </div>
 
                     {detallesAbiertos && (
-                      <div className="border-t border-border/60 bg-muted/10 px-4 py-3">
-                        <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="border-t border-primary/20 px-4 py-2.5">
+                        <div className="mb-2 flex items-center justify-between gap-3">
                           <h4 className="text-sm font-semibold text-foreground">
                             Detalles de campaña
                           </h4>
 
                           {esFinalizada && (
-                            <span className="inline-flex h-6 items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-2.5 text-[11px] text-sky-300">
+                            <span className="inline-flex h-6 items-center rounded-full border border-primary/20 bg-card px-2.5 text-[11px] text-primary">
                               Historial cerrado
                             </span>
                           )}
                         </div>
 
-                        <div className="rounded-xl border border-border/50 bg-background/40 px-3 py-2.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
-                            Descripción
-                          </p>
-                          <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
+                        <div className="space-y-2">
+                          <p className="text-sm leading-5 text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              Descripción:
+                            </span>{" "}
                             {campana.descripcion ||
                               "Sin descripción registrada"}
                           </p>
-                        </div>
 
-                        <div className="campanas-detalles-grid mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                          <MiniDetalle
-                            titulo="Fecha inicio"
-                            valor={formatearFecha(campana.fechaInicio)}
-                          />
-                          <MiniDetalle
-                            titulo="Fecha fin"
-                            valor={formatearFecha(campana.fechaFin)}
-                          />
-                          <MiniDetalle
-                            titulo="Fecha creación"
-                            valor={formatearFecha(campana.fechaCreacion)}
-                          />
-                          <MiniDetalle
-                            titulo="Última actualización"
-                            valor={formatearFecha(campana.fechaActualizacion)}
-                          />
+                          <div className="grid gap-x-4 gap-y-1.5 text-[12px] leading-5 text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Inicio:
+                              </span>{" "}
+                              {formatearFecha(campana.fechaInicio)}
+                            </p>
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Fin:
+                              </span>{" "}
+                              {formatearFecha(campana.fechaFin)}
+                            </p>
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Creación:
+                              </span>{" "}
+                              {formatearFecha(campana.fechaCreacion)}
+                            </p>
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Actualización:
+                              </span>{" "}
+                              {formatearFecha(campana.fechaActualizacion)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1035,7 +1033,7 @@ export default function CampanasPage() {
         <section
           style={{
             ...sectionStyle,
-            maxWidth: "600px",
+            maxWidth: "880px",
             margin: "0 auto",
             width: "100%",
             boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
@@ -1087,13 +1085,13 @@ export default function CampanasPage() {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: "20px 24px" }}>
+          <form onSubmit={handleSubmit} style={{ padding: "18px 24px 20px" }}>
             <div className="space-y-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
                 Datos principales
               </p>
 
-              <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Nombre" required>
                   <input
                     className={inputClass}
@@ -1116,16 +1114,18 @@ export default function CampanasPage() {
                   />
                 </FormField>
 
-                <FormField label="Descripción">
-                  <textarea
-                    className={textareaClass}
-                    placeholder="Describe brevemente la campaña..."
-                    value={form.descripcion ?? ""}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, descripcion: e.target.value }))
-                    }
-                  />
-                </FormField>
+                <div className="md:col-span-2">
+                  <FormField label="Descripción">
+                    <textarea
+                      className={textareaClass}
+                      placeholder="Describe brevemente la campaña..."
+                      value={form.descripcion ?? ""}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, descripcion: e.target.value }))
+                      }
+                    />
+                  </FormField>
+                </div>
               </div>
             </div>
 
@@ -1134,7 +1134,7 @@ export default function CampanasPage() {
                 Planificación
               </p>
 
-              <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Presupuesto (S/)">
                   <input
                     type="number"
@@ -1171,42 +1171,40 @@ export default function CampanasPage() {
                   </select>
                 </FormField>
 
-                <div className="space-y-3">
-                  <FormField label="Fecha de inicio">
-                    <input
-                      type="date"
-                      className={inputClass}
-                      value={fechaInputValue(form.fechaInicio)}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          fechaInicio: e.target.value
-                            ? `${e.target.value}T00:00:00`
-                            : null,
-                        }))
-                      }
-                    />
-                  </FormField>
+                <FormField label="Fecha de inicio">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={fechaInputValue(form.fechaInicio)}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        fechaInicio: e.target.value
+                          ? `${e.target.value}T00:00:00`
+                          : null,
+                      }))
+                    }
+                  />
+                </FormField>
 
-                  <FormField label="Fecha de fin">
-                    <input
-                      type="date"
-                      className={inputClass}
-                      value={fechaInputValue(form.fechaFin)}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          fechaFin: e.target.value
-                            ? `${e.target.value}T23:59:00`
-                            : null,
-                        }))
-                      }
-                    />
-                  </FormField>
-                </div>
+                <FormField label="Fecha de fin">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={fechaInputValue(form.fechaFin)}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        fechaFin: e.target.value
+                          ? `${e.target.value}T23:59:00`
+                          : null,
+                      }))
+                    }
+                  />
+                </FormField>
 
                 {form.estado === "activa" && (
-                  <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs leading-5 text-amber-300">
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs leading-5 text-primary md:col-span-2">
                     Para activar esta campaña, completa objetivo, presupuesto,
                     fecha de inicio y fecha de fin.
                   </div>
@@ -1278,7 +1276,7 @@ function AccionesEstado({
         size="sm"
         disabled={cargando}
         onClick={() => onCambiarEstado(campana, "activa")}
-        className={`${actionButtonClass} border-border/60`}
+        className={`${actionButtonClass} min-w-[82px] border-border/60`}
       >
         {cargando ? (
           <RefreshCw className={`${actionIconClass} animate-spin`} />
@@ -1299,7 +1297,7 @@ function AccionesEstado({
           size="sm"
           disabled={cargando}
           onClick={() => onCambiarEstado(campana, "pausada")}
-          className={`${actionButtonClass} border-border/60`}
+          className={`${actionButtonClass} min-w-[82px] border-border/60`}
         >
           {cargando ? (
             <RefreshCw className={`${actionIconClass} animate-spin`} />
@@ -1315,7 +1313,7 @@ function AccionesEstado({
           size="sm"
           disabled={cargando}
           onClick={() => onCambiarEstado(campana, "finalizada")}
-          className={`${actionButtonClass} border-border/60`}
+          className={`${actionButtonClass} min-w-[88px] border-border/60`}
         >
           <CheckCircle2 className={actionIconClass} />
           Finalizar
@@ -1332,7 +1330,7 @@ function AccionesEstado({
         size="sm"
         disabled={cargando}
         onClick={() => onCambiarEstado(campana, "activa")}
-        className={`${actionButtonClass} border-border/60`}
+        className={`${actionButtonClass} min-w-[92px] border-border/60`}
       >
         {cargando ? (
           <RefreshCw className={`${actionIconClass} animate-spin`} />
@@ -1348,7 +1346,7 @@ function AccionesEstado({
         size="sm"
         disabled={cargando}
         onClick={() => onCambiarEstado(campana, "finalizada")}
-        className={`${actionButtonClass} border-border/60`}
+        className={`${actionButtonClass} min-w-[88px] border-border/60`}
       >
         <CheckCircle2 className={actionIconClass} />
         Finalizar
@@ -1368,17 +1366,6 @@ function DatoFila({ titulo, valor }: { titulo: string; valor: string }) {
           {valor}
         </p>
       </div>
-    </div>
-  );
-}
-
-function MiniDetalle({ titulo, valor }: { titulo: string; valor: string }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-background/40 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
-        {titulo}
-      </p>
-      <p className="mt-1 text-sm font-medium text-foreground">{valor}</p>
     </div>
   );
 }

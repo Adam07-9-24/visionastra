@@ -13,7 +13,6 @@ import {
   LogOut,
   Clock3,
   RefreshCw,
-  CheckCircle2,
   AlertTriangle,
   Laptop,
 } from "lucide-react";
@@ -182,7 +181,6 @@ export default function SesionesPage() {
   };
 
   const sesionesActivas = sesiones.filter((s) => s.estado === "activa").length;
-  const haySesionActual = sesiones.some((s) => s.actual);
   const otrosDispositivos = sesiones.filter((s) => !s.actual).length;
 
   const resumen = [
@@ -190,22 +188,11 @@ export default function SesionesPage() {
       icon: <Monitor size={19} />,
       label: "Sesiones activas",
       value: sesionesActivas,
-      color: "var(--primary)",
-      bg: "color-mix(in srgb, var(--primary) 12%, transparent)",
-    },
-    {
-      icon: <CheckCircle2 size={19} />,
-      label: "Sesión actual",
-      value: haySesionActual ? "Activa" : "—",
-      color: "var(--primary)",
-      bg: "color-mix(in srgb, var(--primary) 12%, transparent)",
     },
     {
       icon: <AlertTriangle size={19} />,
       label: "Otros dispositivos",
       value: otrosDispositivos,
-      color: "var(--primary)",
-      bg: "color-mix(in srgb, var(--primary) 12%, transparent)",
     },
   ];
 
@@ -291,95 +278,59 @@ export default function SesionesPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            style={{
-              borderRadius: "999px",
-              paddingLeft: "16px",
-              paddingRight: "16px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              width: "auto",
-            }}
-            onClick={() => obtenerSesiones(true, true)}
-            disabled={refreshing || loading}
-          >
-            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            Actualizar
-          </Button>
         </div>
       </section>
 
       {/* RESUMEN */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-          gap: "16px",
-          marginBottom: "32px",
-        }}
-      >
+      <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
         {resumen.map((item) => (
           <div
             key={item.label}
-            style={{
-              border: "1px solid var(--border)",
-              borderRadius: "20px",
-              background: "var(--card)",
-              padding: "20px",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-            }}
+            className="rounded-[20px] border border-border bg-card p-5 shadow-sm"
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-              }}
-            >
-              <div
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "14px",
-                  background: item.bg,
-                  color: item.color,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/10 text-primary">
                 {item.icon}
               </div>
 
               <div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color: "var(--muted-foreground)",
-                    marginBottom: "4px",
-                  }}
-                >
+                <div className="mb-1 text-[13px] text-muted-foreground">
                   {item.label}
                 </div>
 
-                <div
-                  style={{
-                    fontSize: "24px",
-                    lineHeight: "30px",
-                    fontWeight: 500,
-                    color: "var(--foreground)",
-                  }}
-                >
+                <div className="text-2xl font-medium leading-[30px] text-foreground">
                   {loading ? <Skeleton className="h-7 w-12" /> : item.value}
                 </div>
               </div>
             </div>
           </div>
         ))}
+
+        <button
+          type="button"
+          onClick={() => obtenerSesiones(true, true)}
+          disabled={refreshing || loading}
+          className="group rounded-[20px] border border-border bg-card p-5 text-left shadow-sm transition-none hover:border-border hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/10 text-primary">
+              <RefreshCw
+                size={19}
+                className={refreshing ? "animate-spin" : ""}
+              />
+            </div>
+
+            <div>
+              <div className="mb-1 text-[13px] text-muted-foreground">
+                {refreshing ? "Recargando sesiones" : "Recargar sesiones"}
+              </div>
+
+              <div className="text-2xl font-medium leading-[30px] text-foreground">
+                {refreshing ? "Actualizando..." : "Actualizar"}
+              </div>
+            </div>
+          </div>
+        </button>
       </section>
 
       {/* SUBTÍTULO */}

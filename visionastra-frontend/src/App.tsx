@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import { Toaster } from "@/components/ui/sonner";
 import CampanasPage from "@/pages/campanas/CampanasPage";
 import RecursosPage from "./pages/recursos/RecursosPage";
+import GeneradorIAPage from "./pages/generador-ia/GeneradorIAPage";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/sesiones" element={<SesionesPage />} />
           <Route path="/campanas" element={<CampanasPage />} />
           <Route path="/recursos" element={<RecursosPage />} />
+          <Route path="/generador-ia" element={<GeneradorIAPage />} />
         </Route>
       </Routes>
 

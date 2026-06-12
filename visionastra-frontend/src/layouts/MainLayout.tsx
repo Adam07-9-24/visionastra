@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { ModeToggle } from "@/components/mode-toggle";
 import ColorModal from "@/components/ColorModal";
 import VisionAstraLogo from "@/components/branding/VisionAstraLogo";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useSilentRefresh } from "@/hooks/useSilentRefresh";
+import { logout } from "@/services/authService";
+import { authManager } from "@/services/authManager";
 import {
   LayoutDashboard,
   Shield,
   Megaphone,
   FolderOpen,
+  WandSparkles,
   ChevronLeft,
   ChevronRight,
   Palette,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -20,14 +30,41 @@ const navItems = [
   { to: "/sesiones", label: "Sesiones", icon: Shield },
   { to: "/campanas", label: "Campañas", icon: Megaphone },
   { to: "/recursos", label: "Recursos", icon: FolderOpen },
+  { to: "/generador-ia", label: "Generador IA", icon: WandSparkles },
 ];
 
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [openColor, setOpenColor] = useState(false);
 
+  const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
+  const userStorage = localStorage.getItem("user");
+  let userInfo = {
+    nombreCompleto: "Usuario",
+    iniciales: "US",
+  };
+
+  if (userStorage) {
+    try {
+      const user = JSON.parse(userStorage);
+      const nombres = String(user?.nombres || "").trim();
+      const apellidos = String(user?.apellidos || "").trim();
+      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim();
+      const iniciales = `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase();
+
+      userInfo = {
+        nombreCompleto: nombreCompleto || "Usuario",
+        iniciales: iniciales || "US",
+      };
+    } catch {
+      userInfo = {
+        nombreCompleto: "Usuario",
+        iniciales: "US",
+      };
+    }
+  }
 
   useHeartbeat();
   useSilentRefresh();
@@ -46,19 +83,22 @@ export default function MainLayout() {
     return <Navigate to="/login" />;
   }
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Error al cerrar sesión en backend", error);
+    } finally {
+      authManager.clearSession();
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* ── HEADER ── */}
       <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            paddingLeft: "18px",
-            gap: "10px",
-            marginBottom: "4px",
-          }}
-        >
+        <div className="flex h-full items-center">
           <VisionAstraLogo size={40} showText={true} />
         </div>
 
@@ -245,6 +285,52 @@ export default function MainLayout() {
                 </NavLink>
               ))}
             </nav>
+
+            <div
+              className="mt-auto border-t border-border pt-4"
+              style={{
+                paddingLeft: collapsed ? "10px" : "12px",
+                paddingRight: collapsed ? "10px" : "12px",
+              }}
+            >
+              <div
+                className={`flex items-center rounded-lg bg-muted/30 ${
+                  collapsed ? "justify-center p-2" : "gap-3 p-3"
+                }`}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                  {userInfo.iniciales}
+                </div>
+
+                {!collapsed && (
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                      {userInfo.nombreCompleto}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      title="Cerrar sesión"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <LogOut size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {collapsed && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="Cerrar sesión"
+                  className="mt-2 flex h-9 w-full items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <LogOut size={16} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* BOTÓN COLAPSAR */}

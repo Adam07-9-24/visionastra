@@ -1,13 +1,11 @@
+@import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
 @source "../src/**/*.{ts,tsx}";
-@tailwind base;
 
 @custom-variant dark (&:is(.dark *));
-@tailwind components;
-@tailwind utilities;
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -131,21 +129,6 @@
   --danger-border-hover: #991b1b;
 }
 
-button:not(:disabled),
-a {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-  @apply bg-background;
-}
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -155,12 +138,27 @@ body,
     @apply font-sans bg-background;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground min-h-screen;
     transition: background-color 0.2s ease, color 0.2s ease;
-    overflow: hidden;
+  }
+
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }
+
 @media (min-width: 1024px) {
   .campana-row-grid {
     grid-template-columns: 1.5fr 140px 190px 260px;

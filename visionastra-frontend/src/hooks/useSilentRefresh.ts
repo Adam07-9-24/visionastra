@@ -1,12 +1,5 @@
 import { useEffect, useRef } from "react";
-import axios from "axios";
 import { authManager } from "@/services/authManager";
-
-type RefreshResponse = {
-  token: string;
-  refreshToken: string;
-  type?: string;
-};
 
 export function useSilentRefresh() {
   const timeoutRef = useRef<number | null>(null);
@@ -25,75 +18,41 @@ export function useSilentRefresh() {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
 
+        if (!payload.exp) {
+          throw new Error("JWT sin exp");
+        }
+
         const exp = payload.exp * 1000;
         const now = Date.now();
         const timeLeft = exp - now;
 
-        // Refrescar 1 minuto antes de expirar
-        const refreshTime = timeLeft - 60000;
+        // Refrescar 5 minutos antes de expirar
+        const refreshTime = timeLeft - 5 * 60 * 1000;
 
+        const executeRefresh = async () => {
+          try {
+            const newToken = await authManager.refreshToken();
+
+            scheduleSilentRefresh(newToken);
+          } catch {
+            authManager.clearSession();
+          }
+        };
+
+        // Si el token ya está cerca de vencer, refrescar inmediatamente
         if (refreshTime <= 0) {
-          console.log(
-            "⛔ Token muy cerca de expirar, no se programó silent refresh"
-          );
+          timeoutRef.current = window.setTimeout(() => {
+            void executeRefresh();
+          }, 0);
+
           return;
         }
 
-        timeoutRef.current = window.setTimeout(async () => {
-          if (authManager.isRefreshing()) {
-            setTimeout(() => {
-              const latestToken = localStorage.getItem("token");
-
-              if (latestToken) {
-                scheduleSilentRefresh(latestToken);
-              }
-            }, 3000);
-
-            return;
-          }
-
-          try {
-            authManager.startRefresh();
-
-            const currentRefreshToken = localStorage.getItem("refreshToken");
-
-            if (!currentRefreshToken) {
-              throw new Error("No refresh token disponible");
-            }
-
-            const res = await axios.post<RefreshResponse>(
-              "http://localhost:8083/api/auth/refresh",
-              { refreshToken: currentRefreshToken }
-            );
-
-            const newToken = res.data.token;
-            const newRefreshToken = res.data.refreshToken;
-
-            if (!newToken || !newRefreshToken) {
-              throw new Error("Respuesta de refresh incompleta");
-            }
-
-            localStorage.setItem("token", newToken);
-            localStorage.setItem("refreshToken", newRefreshToken);
-
-            // Programar el siguiente refresh usando el nuevo JWT
-            scheduleSilentRefresh(newToken);
-          } catch {
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
-
-            window.location.href = "/login";
-          } finally {
-            authManager.endRefresh();
-          }
+        timeoutRef.current = window.setTimeout(() => {
+          void executeRefresh();
         }, refreshTime);
       } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-
-        window.location.href = "/login";
+        authManager.clearSession();
       }
     };
 

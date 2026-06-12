@@ -8,15 +8,14 @@ export default function VisionAstraLogo({
   showText?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+    <div className="flex items-center gap-3">
       <svg
         width={size}
         height={size}
         viewBox="0 0 44 44"
         fill="none"
-        className="text-primary"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ flexShrink: 0 }}
+        className="shrink-0 text-primary"
       >
         {/* FONDO DINÁMICO */}
         <rect
