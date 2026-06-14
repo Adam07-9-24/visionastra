@@ -25,6 +25,7 @@ import { obtenerCampanas } from "@/services/campanaService";
 
 import type { Recurso } from "@/services/recursoService";
 import {
+  crearUrlArchivoRecurso,
   obtenerArchivoRecurso,
   obtenerRecursosPorCampana,
 } from "@/services/recursoService";
@@ -107,11 +108,41 @@ function obtenerEstadoGeneracionVisible(generacion: GeneracionIA) {
 }
 
 const estadosIniciadosGeneracion = new Set(["pendiente", "procesando"]);
+const limiteGeneracionesIniciadasPorSeleccion = 4;
 const mensajeLimiteGeneraciones =
-  "Ya tienes 2 generaciones iniciadas para esta campaña y recurso. Continúa con una de ellas antes de crear otra.";
+  "Ya tienes 4 generaciones iniciadas para esta campaña y recursos. Continúa con una de ellas antes de crear otra.";
+
+const promptBaseSinImagen =
+  "Crea un video promocional realista y profesional para redes sociales usando la información seleccionada. Muestra escenas naturales, personas reales, ambiente cotidiano y una estética limpia. El video debe transmitir confianza, motivación y valor para el público objetivo.";
+
+const promptBaseConImagen =
+  "Crea un video promocional realista y profesional para redes sociales usando la información seleccionada y la imagen de referencia como guía visual principal del personaje o producto. Muestra escenas naturales, personas reales, ambiente cotidiano y una estética limpia. El video debe transmitir confianza, alegría y valor para el público objetivo, destacando visualmente el producto sin usar texto en pantalla.";
+
+const frasesCampanaSugeridas = [
+  "Llévate el tuyo hoy",
+  "Consigue el tuyo ahora",
+  "Encuentra tu favorito",
+  "Un detalle que emociona",
+];
 
 function normalizarIdsRecursos(ids: number[]) {
   return [...ids].sort((a, b) => a - b).join(",");
+}
+
+function construirInstruccionFraseCampana(frase: string) {
+  return `Frase de campaña: "${frase}". Usarla como parte de un momento hablado breve y natural en español latino, no como una frase aislada. La frase debe ser hablada únicamente como audio por una persona visible, con rostro y boca visibles, sincronización labial natural y voz cálida. El diálogo debe ser directo, fluido y corto para un video de 8 segundos. No mostrar palabras, subtítulos ni texto en pantalla.`;
+}
+
+function reemplazarInstruccionFraseCampana(texto: string, frase: string) {
+  const textoSinInstruccion = texto
+    .replace(/^Frase de campaña:.*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trimEnd();
+  const instruccion = construirInstruccionFraseCampana(frase);
+
+  return textoSinInstruccion
+    ? `${textoSinInstruccion}\n\n${instruccion}`
+    : instruccion;
 }
 
 function generacionCoincideConSeleccion(
@@ -154,6 +185,10 @@ export default function GeneradorIAPage() {
   const [generandoVideo, setGenerandoVideo] = useState(false);
   const [cargandoVideoGenerado, setCargandoVideoGenerado] = useState(false);
   const [urlVideoGenerado, setUrlVideoGenerado] = useState<string | null>(null);
+  const [previewImagenReferencia, setPreviewImagenReferencia] = useState<{
+    idRecurso: number;
+    url: string;
+  } | null>(null);
   const [idUrlVideoGenerado, setIdUrlVideoGenerado] = useState<number | null>(
     null
   );
@@ -171,9 +206,10 @@ export default function GeneradorIAPage() {
     number[]
   >([]);
 
-  const [prompt, setPrompt] = useState(
-    "Crea un video promocional realista y profesional para redes sociales usando la información seleccionada. Muestra escenas naturales, personas reales, ambiente cotidiano y una estética limpia. El video debe transmitir confianza, motivación y valor para el público objetivo."
+  const [promptPersonalizado, setPromptPersonalizado] = useState<string | null>(
+    null
   );
+  const [fraseCampanaOpcional, setFraseCampanaOpcional] = useState("");
 
   const [generacionActiva, setGeneracionActiva] = useState<GeneracionIA | null>(
     null
@@ -208,6 +244,35 @@ export default function GeneradorIAPage() {
     [recursosDisponiblesIA]
   );
 
+  const imagenReferenciaSeleccionada = useMemo(() => {
+    // A futuro se puede soportar multiples imagenes de referencia.
+    return (
+      idsRecursosSeleccionados
+        .map((idRecurso) =>
+          recursos.find((recurso) => recurso.idRecurso === idRecurso)
+        )
+        .find((recurso) => recurso?.tipo?.toLowerCase() === "imagen") ?? null
+    );
+  }, [idsRecursosSeleccionados, recursos]);
+
+  const previewImagenReferenciaUrl =
+    imagenReferenciaSeleccionada &&
+    previewImagenReferencia?.idRecurso ===
+      imagenReferenciaSeleccionada.idRecurso
+      ? previewImagenReferencia.url
+      : null;
+
+  const prompt =
+    promptPersonalizado ??
+    (imagenReferenciaSeleccionada ? promptBaseConImagen : promptBaseSinImagen);
+
+  function handleSeleccionarFraseCampanaSugerida(frase: string) {
+    setFraseCampanaOpcional(frase);
+    setPromptPersonalizado((actual) =>
+      reemplazarInstruccionFraseCampana(actual ?? prompt, frase)
+    );
+  }
+
   const generacionesIniciadasMismaSeleccion = useMemo(() => {
     if (!campanaSeleccionada || idsRecursosSeleccionados.length === 0) {
       return 0;
@@ -223,7 +288,8 @@ export default function GeneradorIAPage() {
   }, [campanaSeleccionada, generaciones, idsRecursosSeleccionados]);
 
   const limiteGeneracionesIniciadasAlcanzado =
-    generacionesIniciadasMismaSeleccion >= 2;
+    generacionesIniciadasMismaSeleccion >=
+    limiteGeneracionesIniciadasPorSeleccion;
 
   useEffect(() => {
     if (
@@ -250,6 +316,43 @@ export default function GeneradorIAPage() {
     idsRecursosSeleccionados,
     limiteGeneracionesIniciadasAlcanzado,
   ]);
+
+  useEffect(() => {
+    if (!imagenReferenciaSeleccionada) {
+      return;
+    }
+
+    let cancelado = false;
+    let objectUrl: string | null = null;
+
+    const cargarPreviewImagenReferencia = async () => {
+      try {
+        const idRecurso = imagenReferenciaSeleccionada.idRecurso;
+        const url = await crearUrlArchivoRecurso(idRecurso);
+
+        objectUrl = url;
+
+        if (cancelado) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+
+        setPreviewImagenReferencia({ idRecurso, url });
+      } catch {
+        // La tarjeta puede mostrarse sin miniatura si la preview no carga.
+      }
+    };
+
+    void cargarPreviewImagenReferencia();
+
+    return () => {
+      cancelado = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [imagenReferenciaSeleccionada]);
 
   useEffect(() => {
     if (!idRecursoVideoGenerado) {
@@ -301,6 +404,7 @@ export default function GeneradorIAPage() {
     try {
       setCargandoRecursos(true);
       setIdsRecursosSeleccionados([]);
+      setPreviewImagenReferencia(null);
 
       const recursosData = await obtenerRecursosPorCampana(idCampana);
       setRecursos(recursosData);
@@ -335,6 +439,7 @@ export default function GeneradorIAPage() {
           setIdCampanaSeleccionada(primeraActiva.idCampana);
           setCargandoRecursos(true);
           setIdsRecursosSeleccionados([]);
+          setPreviewImagenReferencia(null);
 
           const recursosData = await obtenerRecursosPorCampana(
             primeraActiva.idCampana
@@ -371,6 +476,14 @@ export default function GeneradorIAPage() {
   }
 
   function alternarRecurso(idRecurso: number) {
+    const recursoSeleccionado = recursos.find(
+      (recurso) => recurso.idRecurso === idRecurso
+    );
+
+    if (recursoSeleccionado?.tipo?.toLowerCase() === "imagen") {
+      setPreviewImagenReferencia(null);
+    }
+
     setIdsRecursosSeleccionados((actuales) =>
       actuales.includes(idRecurso)
         ? actuales.filter((id) => id !== idRecurso)
@@ -417,19 +530,25 @@ export default function GeneradorIAPage() {
       return;
     }
 
-    if (generacionesIniciadasMismaSeleccion === 1) {
+    if (generacionesIniciadasMismaSeleccion > 0) {
       toast.info(
-        "Puedes crear una variante adicional o continuar preparando el prompt."
+        "Puedes crear variantes adicionales hasta llegar a 4 generaciones iniciadas o continuar preparando el prompt."
       );
     }
 
     try {
       setCreando(true);
 
+      const fraseCampana = fraseCampanaOpcional.trim();
+      const promptTieneFraseCampana = /^Frase de campaña:/m.test(prompt);
+      const promptGeneracion = fraseCampana && !promptTieneFraseCampana
+        ? `${prompt.trim()}\n\nFrase de campaña opcional: "${fraseCampana}". Usarla como voz o diálogo breve en español latino natural, no como texto en pantalla.`
+        : prompt.trim();
+
       const nuevaGeneracion = await crearGeneracionIA({
         idCampana: campanaSeleccionada.idCampana,
         idAgente: null,
-        prompt: prompt.trim(),
+        prompt: promptGeneracion,
         tipoSalida: "video",
         idsRecursos: idsRecursosSeleccionados,
       });
@@ -784,12 +903,91 @@ export default function GeneradorIAPage() {
                 </div>
               )}
 
+              {imagenReferenciaSeleccionada && (
+                <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      Imagen de referencia
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Esta imagen se usar&aacute; como gu&iacute;a visual para
+                      generar el video.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {previewImagenReferenciaUrl && (
+                      <img
+                        src={previewImagenReferenciaUrl}
+                        alt={
+                          imagenReferenciaSeleccionada.titulo ??
+                          imagenReferenciaSeleccionada.nombreArchivo
+                        }
+                        className="h-20 w-20 shrink-0 rounded-xl border border-border bg-card object-cover"
+                      />
+                    )}
+
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-sm font-medium text-foreground">
+                        {imagenReferenciaSeleccionada.titulo ??
+                          imagenReferenciaSeleccionada.nombreArchivo}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className="mt-2 border-primary/20 bg-primary/10 text-primary"
+                      >
+                        Referencia visual seleccionada
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <textarea
                 value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
+                onChange={(event) =>
+                  setPromptPersonalizado(event.target.value)
+                }
                 placeholder="Ej: Crea un video promocional realista para vender este curso, mostrando personas usando el producto o servicio en situaciones naturales."
                 className="min-h-[130px] w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
               />
+
+              <div className="mt-4 rounded-2xl border border-border bg-background/50 p-4">
+                <label
+                  htmlFor="frase-campana-opcional"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Frase de campaña opcional
+                </label>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Opcional. Elige o escribe una frase corta para usarla como voz
+                  o diálogo breve del video, no como texto en pantalla.
+                </p>
+
+                <input
+                  id="frase-campana-opcional"
+                  type="text"
+                  value={fraseCampanaOpcional}
+                  onChange={(event) =>
+                    setFraseCampanaOpcional(event.target.value)
+                  }
+                  placeholder="Ejemplo: Llévate el tuyo hoy"
+                  className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+                />
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {frasesCampanaSugeridas.map((frase) => (
+                    <button
+                      key={frase}
+                      type="button"
+                      onClick={() => handleSeleccionarFraseCampanaSugerida(frase)}
+                      className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                    >
+                      {frase}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-muted-foreground">

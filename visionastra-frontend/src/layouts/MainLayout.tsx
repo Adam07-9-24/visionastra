@@ -19,6 +19,7 @@ import {
   Megaphone,
   FolderOpen,
   WandSparkles,
+  Send,
   ChevronLeft,
   ChevronRight,
   Palette,
@@ -31,6 +32,7 @@ const navItems = [
   { to: "/campanas", label: "Campañas", icon: Megaphone },
   { to: "/recursos", label: "Recursos", icon: FolderOpen },
   { to: "/generador-ia", label: "Generador IA", icon: WandSparkles },
+  { to: "/publicaciones", label: "Publicaciones", icon: Send },
 ];
 
 export default function MainLayout() {
@@ -51,8 +53,13 @@ export default function MainLayout() {
       const user = JSON.parse(userStorage);
       const nombres = String(user?.nombres || "").trim();
       const apellidos = String(user?.apellidos || "").trim();
-      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim();
-      const iniciales = `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase();
+      const nombreCompleto = [nombres, apellidos]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const iniciales = `${nombres.charAt(0)}${apellidos.charAt(
+        0
+      )}`.toUpperCase();
 
       userInfo = {
         nombreCompleto: nombreCompleto || "Usuario",
