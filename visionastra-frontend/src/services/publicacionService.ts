@@ -111,3 +111,13 @@ export async function cancelarPublicacion(
 
   return response.data;
 }
+
+export async function enviarPublicacionAN8n(
+  idPublicacion: number
+): Promise<Publicacion> {
+  const response = await api.patch<Publicacion>(
+    `/publicaciones/${idPublicacion}/enviar-n8n`
+  );
+
+  return response.data;
+}

@@ -3,6 +3,7 @@ import {
   Ban,
   CalendarDays,
   Edit3,
+  ExternalLink,
   FileText,
   ImageIcon,
   Loader2,
@@ -32,6 +33,7 @@ import {
   actualizarPublicacion,
   cancelarPublicacion,
   crearPublicacion,
+  enviarPublicacionAN8n,
   obtenerPublicaciones,
   type EstadoPublicacion,
   type PlataformaPublicacion,
@@ -183,6 +185,15 @@ function puedeCancelarPublicacion(publicacion: Publicacion) {
   return !estadosBloqueados.includes(publicacion.estado);
 }
 
+function puedeEnviarPublicacionAN8n(publicacion: Publicacion) {
+  return (
+    publicacion.estado === "lista" &&
+    Boolean(publicacion.idRecurso) &&
+    publicacion.tipoRecurso === "video" &&
+    Boolean(publicacion.copyTexto?.trim())
+  );
+}
+
 export default function PublicacionesPage() {
   const [campanas, setCampanas] = useState<Campana[]>([]);
   const [campanaSeleccionada, setCampanaSeleccionada] =
@@ -195,6 +206,7 @@ export default function PublicacionesPage() {
   const [cargandoPublicaciones, setCargandoPublicaciones] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [cancelandoId, setCancelandoId] = useState<number | null>(null);
+  const [enviandoId, setEnviandoId] = useState<number | null>(null);
   const [cargandoPreview, setCargandoPreview] = useState(false);
 
   const [busquedaCampana, setBusquedaCampana] = useState("");
@@ -240,6 +252,19 @@ export default function PublicacionesPage() {
         publicacion.idCampana === campanaSeleccionada.idCampana
     );
   }, [campanaSeleccionada, publicaciones]);
+
+  const yaExisteEnvioMismoVideoPlataforma = useCallback(
+    (publicacion: Publicacion) =>
+      Boolean(publicacion.idRecurso) &&
+      publicaciones.some(
+        (otra) =>
+          otra.idPublicacion !== publicacion.idPublicacion &&
+          otra.idRecurso === publicacion.idRecurso &&
+          otra.plataforma === publicacion.plataforma &&
+          (otra.estado === "enviada" || otra.estado === "publicada")
+      ),
+    [publicaciones]
+  );
 
   const cargarPublicaciones = useCallback(async (idCampana: number) => {
     try {
@@ -456,6 +481,11 @@ export default function PublicacionesPage() {
       return false;
     }
 
+    if (form.estado === "lista" && !form.copyTexto.trim()) {
+      toast.error("Agrega una descripción antes de dejar la publicación lista.");
+      return false;
+    }
+
     return true;
   }
 
@@ -533,6 +563,69 @@ export default function PublicacionesPage() {
     }
   }
 
+  async function manejarEnviarPublicacionAN8n(publicacion: Publicacion) {
+    if (enviandoId !== null) return;
+
+    if (estadosBloqueados.includes(publicacion.estado)) {
+      toast.error("Esta publicación no se puede enviar a n8n");
+      return;
+    }
+
+    if (!publicacion.copyTexto?.trim()) {
+      toast.error("La descripción es obligatoria para enviar a n8n.");
+      return;
+    }
+
+    if (yaExisteEnvioMismoVideoPlataforma(publicacion)) {
+      toast.error("Este video ya fue enviado a esta plataforma.");
+      return;
+    }
+
+    if (!puedeEnviarPublicacionAN8n(publicacion)) {
+      toast.error("Solo puedes enviar publicaciones listas con video asociado.");
+      return;
+    }
+
+    try {
+      setEnviandoId(publicacion.idPublicacion);
+      const publicacionActualizada = await enviarPublicacionAN8n(
+        publicacion.idPublicacion
+      );
+      const publicacionParaMostrar: Publicacion =
+        publicacionActualizada.mensajeError &&
+        publicacionActualizada.estado !== "error"
+          ? { ...publicacionActualizada, estado: "error" }
+          : publicacionActualizada;
+
+      setPublicaciones((prev) =>
+        prev.map((item) =>
+          item.idPublicacion === publicacionParaMostrar.idPublicacion
+            ? publicacionParaMostrar
+            : item
+        )
+      );
+
+      if (
+        publicacionParaMostrar.estado === "error" ||
+        publicacionParaMostrar.mensajeError
+      ) {
+        toast.error(
+          publicacionParaMostrar.mensajeError ||
+            "No se pudo enviar la publicación a n8n."
+        );
+        return;
+      }
+
+      toast.success("Publicación enviada a n8n correctamente.");
+    } catch (error: unknown) {
+      toast.error(
+        obtenerMensajeError(error, "No se pudo enviar la publicación a n8n.")
+      );
+    } finally {
+      setEnviandoId(null);
+    }
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-[1500px] flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
       <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
@@ -553,15 +646,6 @@ export default function PublicacionesPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            onClick={abrirFormularioCrear}
-            disabled={!campanaSeleccionada}
-            className="h-10 gap-2 self-start rounded-xl px-5 text-sm font-medium md:self-center"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva publicación
-          </Button>
         </div>
       </header>
 
@@ -666,12 +750,23 @@ export default function PublicacionesPage() {
             </div>
 
             {campanaSeleccionada && (
-              <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5" />
-                {publicacionesFiltradas.length}{" "}
-                {publicacionesFiltradas.length === 1
-                  ? "publicación"
-                  : "publicaciones"}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {publicacionesFiltradas.length}{" "}
+                  {publicacionesFiltradas.length === 1
+                    ? "publicación"
+                    : "publicaciones"}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={abrirFormularioCrear}
+                  className="h-9 gap-1.5 rounded-xl px-3 text-xs font-medium"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nueva publicación
+                </Button>
               </div>
             )}
           </div>
@@ -786,7 +881,10 @@ export default function PublicacionesPage() {
                         </Field>
 
                         <div className="md:col-span-2">
-                          <Field label="Descripción / caption">
+                          <Field
+                            label="Descripción / caption"
+                            required={form.estado === "lista"}
+                          >
                             <textarea
                               value={form.copyTexto}
                               onChange={(event) =>
@@ -838,8 +936,8 @@ export default function PublicacionesPage() {
                       </div>
 
                       <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                        Espacio reservado para el envío futuro a n8n. En esta
-                        fase no se llama a ningún endpoint de automatización.
+                        Para dejar una publicación lista debes seleccionar un
+                        video activo y agregar una descripción.
                       </div>
 
                       <div className="flex flex-col gap-2 border-t border-border/50 pt-4 sm:flex-row sm:justify-end">
@@ -943,6 +1041,22 @@ export default function PublicacionesPage() {
                                 {publicacion.copyTexto ||
                                   "Sin descripción registrada"}
                               </p>
+                              {(publicacion.estado === "error" ||
+                                publicacion.mensajeError) &&
+                                publicacion.mensajeError && (
+                                  <p className="mt-1 max-w-[320px] rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs text-destructive">
+                                    {publicacion.mensajeError}
+                                  </p>
+                                )}
+                              {puedeEnviarPublicacionAN8n(publicacion) &&
+                                yaExisteEnvioMismoVideoPlataforma(
+                                  publicacion
+                                ) && (
+                                  <p className="mt-1 max-w-[320px] rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
+                                    Este video ya fue enviado a esta
+                                    plataforma.
+                                  </p>
+                                )}
                             </td>
 
                             <td className="px-4 py-3.5">
@@ -977,6 +1091,17 @@ export default function PublicacionesPage() {
                               >
                                 {estadoLabel[publicacion.estado]}
                               </Badge>
+                              {publicacion.urlPublicacion && (
+                                <a
+                                  href={publicacion.urlPublicacion}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                >
+                                  Ver publicación
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
                             </td>
 
                             <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">
@@ -985,6 +1110,38 @@ export default function PublicacionesPage() {
 
                             <td className="px-4 py-3.5">
                               <div className="flex items-center justify-end gap-1">
+                                {puedeEnviarPublicacionAN8n(publicacion) && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      void manejarEnviarPublicacionAN8n(
+                                        publicacion
+                                      )
+                                    }
+                                    disabled={
+                                      enviandoId ===
+                                        publicacion.idPublicacion ||
+                                      yaExisteEnvioMismoVideoPlataforma(
+                                        publicacion
+                                      )
+                                    }
+                                    className="h-8 gap-1 rounded-lg px-2.5 text-xs text-primary hover:bg-primary/10 hover:text-primary"
+                                  >
+                                    {enviandoId ===
+                                    publicacion.idPublicacion ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Send className="h-3.5 w-3.5" />
+                                    )}
+                                    {enviandoId ===
+                                    publicacion.idPublicacion
+                                      ? "Enviando..."
+                                      : "Enviar a n8n"}
+                                  </Button>
+                                )}
+
                                 <Button
                                   type="button"
                                   variant="ghost"
