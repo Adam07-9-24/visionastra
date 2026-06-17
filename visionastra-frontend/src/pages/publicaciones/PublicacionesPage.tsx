@@ -266,6 +266,20 @@ export default function PublicacionesPage() {
     [publicaciones]
   );
 
+  const obtenerCampanaDePublicacion = useCallback(
+    (idCampana: number) =>
+      campanas.find((campana) => campana.idCampana === idCampana),
+    [campanas]
+  );
+
+  const esCampanaActivaParaPublicacion = useCallback(
+    (publicacion: Publicacion) => {
+      const campana = obtenerCampanaDePublicacion(publicacion.idCampana);
+      return campana?.estado?.toLowerCase() === "activa";
+    },
+    [obtenerCampanaDePublicacion]
+  );
+
   const cargarPublicaciones = useCallback(async (idCampana: number) => {
     try {
       setCargandoPublicaciones(true);
@@ -565,6 +579,11 @@ export default function PublicacionesPage() {
 
   async function manejarEnviarPublicacionAN8n(publicacion: Publicacion) {
     if (enviandoId !== null) return;
+
+    if (!esCampanaActivaParaPublicacion(publicacion)) {
+      toast.error("Solo puedes enviar publicaciones de campañas activas.");
+      return;
+    }
 
     if (estadosBloqueados.includes(publicacion.estado)) {
       toast.error("Esta publicación no se puede enviar a n8n");
@@ -1028,7 +1047,15 @@ export default function PublicacionesPage() {
                       </thead>
 
                       <tbody className="divide-y divide-border/40">
-                        {publicacionesFiltradas.map((publicacion) => (
+                        {publicacionesFiltradas.map((publicacion) => {
+                          const puedeEnviarAN8n =
+                            puedeEnviarPublicacionAN8n(publicacion);
+                          const campanaActiva =
+                            esCampanaActivaParaPublicacion(publicacion);
+                          const envioDuplicado =
+                            yaExisteEnvioMismoVideoPlataforma(publicacion);
+
+                          return (
                           <tr
                             key={publicacion.idPublicacion}
                             className="transition-colors hover:bg-muted/20"
@@ -1048,10 +1075,7 @@ export default function PublicacionesPage() {
                                     {publicacion.mensajeError}
                                   </p>
                                 )}
-                              {puedeEnviarPublicacionAN8n(publicacion) &&
-                                yaExisteEnvioMismoVideoPlataforma(
-                                  publicacion
-                                ) && (
+                              {puedeEnviarAN8n && envioDuplicado && (
                                   <p className="mt-1 max-w-[320px] rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
                                     Este video ya fue enviado a esta
                                     plataforma.
@@ -1110,36 +1134,43 @@ export default function PublicacionesPage() {
 
                             <td className="px-4 py-3.5">
                               <div className="flex items-center justify-end gap-1">
-                                {puedeEnviarPublicacionAN8n(publicacion) && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      void manejarEnviarPublicacionAN8n(
-                                        publicacion
-                                      )
-                                    }
-                                    disabled={
-                                      enviandoId ===
-                                        publicacion.idPublicacion ||
-                                      yaExisteEnvioMismoVideoPlataforma(
-                                        publicacion
-                                      )
-                                    }
-                                    className="h-8 gap-1 rounded-lg px-2.5 text-xs text-primary hover:bg-primary/10 hover:text-primary"
-                                  >
-                                    {enviandoId ===
-                                    publicacion.idPublicacion ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <Send className="h-3.5 w-3.5" />
+                                {puedeEnviarAN8n && (
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        void manejarEnviarPublicacionAN8n(
+                                          publicacion
+                                        )
+                                      }
+                                      disabled={
+                                        enviandoId ===
+                                          publicacion.idPublicacion ||
+                                        envioDuplicado ||
+                                        !campanaActiva
+                                      }
+                                      className="h-8 gap-1 rounded-lg px-2.5 text-xs text-primary hover:bg-primary/10 hover:text-primary"
+                                    >
+                                      {enviandoId ===
+                                      publicacion.idPublicacion ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <Send className="h-3.5 w-3.5" />
+                                      )}
+                                      {enviandoId ===
+                                      publicacion.idPublicacion
+                                        ? "Enviando..."
+                                        : "Enviar a n8n"}
+                                    </Button>
+                                    {!campanaActiva && (
+                                      <span className="max-w-[190px] text-right text-[11px] leading-snug text-muted-foreground">
+                                        Solo puedes enviar publicaciones de
+                                        campañas activas.
+                                      </span>
                                     )}
-                                    {enviandoId ===
-                                    publicacion.idPublicacion
-                                      ? "Enviando..."
-                                      : "Enviar a n8n"}
-                                  </Button>
+                                  </div>
                                 )}
 
                                 <Button
@@ -1180,7 +1211,8 @@ export default function PublicacionesPage() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

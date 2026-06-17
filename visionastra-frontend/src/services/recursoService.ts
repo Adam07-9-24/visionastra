@@ -101,6 +101,19 @@ export async function actualizarRecurso(
   return response.data;
 }
 
+// ✅ Nuevo: editar solo el título del recurso.
+// Se usa especialmente para videos IA, para diferenciarlos sin tocar el archivo.
+export async function actualizarTituloRecurso(
+  idRecurso: number,
+  titulo: string
+): Promise<Recurso> {
+  const response = await api.patch<Recurso>(`/recursos/${idRecurso}/titulo`, {
+    titulo,
+  });
+
+  return response.data;
+}
+
 export async function archivarRecurso(idRecurso: number): Promise<Recurso> {
   const response = await api.patch<Recurso>(`/recursos/${idRecurso}/archivar`);
   return response.data;

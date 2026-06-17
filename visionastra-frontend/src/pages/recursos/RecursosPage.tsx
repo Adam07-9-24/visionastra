@@ -29,6 +29,7 @@ import {
 
 import {
   actualizarRecurso,
+  actualizarTituloRecurso,
   archivarRecurso,
   crearRecurso,
   crearUrlArchivoRecurso,
@@ -123,20 +124,6 @@ function obtenerIconoTipo(tipo: TipoRecurso) {
   return <FileText className="h-3.5 w-3.5" />;
 }
 
-function esVideoGeneradoPorIA(recurso: Recurso) {
-  if (recurso.tipo !== "video") {
-    return false;
-  }
-
-  const titulo = recurso.titulo ?? "";
-  const nombreArchivo = recurso.nombreArchivo ?? "";
-
-  return (
-    titulo.startsWith("Video IA") ||
-    nombreArchivo.includes("video-ia-generacion")
-  );
-}
-
 function claseEstadoCampana(estado: EstadoCampana) {
   if (estado === "activa") {
     return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
@@ -196,6 +183,7 @@ export default function RecursosPage() {
   const [cargandoPreview, setCargandoPreview] = useState(false);
 
   const campanaFinalizada = campanaSeleccionada?.estado === "finalizada";
+  const editandoVideo = recursoEditando?.tipo === "video";
 
   const recursosActivos = useMemo(
     () => recursos.filter((recurso) => recurso.estado === "activo"),
@@ -340,7 +328,7 @@ export default function RecursosPage() {
       return false;
     }
     if (!form.titulo.trim()) {
-      toast.warning("El título del recurso es obligatorio.");
+      toast.error("El título del recurso es obligatorio.");
       return false;
     }
     if (form.tipo === "copy") {
@@ -386,9 +374,15 @@ export default function RecursosPage() {
     try {
       setGuardando(true);
       if (recursoEditando) {
-        const payload = construirRequest();
-        await actualizarRecurso(recursoEditando.idRecurso, payload);
-        toast.success("Recurso actualizado correctamente");
+        if (recursoEditando.tipo === "video") {
+          const titulo = form.titulo.trim();
+          await actualizarTituloRecurso(recursoEditando.idRecurso, titulo);
+          toast.success("Título del video actualizado correctamente");
+        } else {
+          const payload = construirRequest();
+          await actualizarRecurso(recursoEditando.idRecurso, payload);
+          toast.success("Recurso actualizado correctamente");
+        }
       } else if (form.tipo === "copy") {
         const payload = construirRequest();
         await crearRecurso(payload);
@@ -791,10 +785,16 @@ export default function RecursosPage() {
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-background/60 shadow-sm">
                 <div className="border-b border-border/50 bg-muted/20 px-5 py-4">
                   <h3 className="text-sm font-semibold text-foreground">
-                    {recursoEditando ? "Editar recurso" : "Nuevo recurso"}
+                    {editandoVideo
+                      ? "Editar título del video"
+                      : recursoEditando
+                      ? "Editar recurso"
+                      : "Nuevo recurso"}
                   </h3>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {recursoEditando
+                    {editandoVideo
+                      ? "Solo se actualizará el título del video."
+                      : recursoEditando
                       ? "Puedes editar los datos del recurso. Para cambiar el archivo, crea un nuevo recurso."
                       : "Sube un archivo real desde tu PC o crea una idea de campaña."}
                   </p>
@@ -802,6 +802,7 @@ export default function RecursosPage() {
 
                 <div className="p-5">
                   <div className="grid gap-4 md:grid-cols-2">
+                    {!editandoVideo && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Tipo
@@ -831,8 +832,14 @@ export default function RecursosPage() {
                         <option value="video">Video</option>
                       </select>
                     </div>
+                    )}
 
-                    <div className="flex flex-col gap-1.5">
+                    <div
+                      className={[
+                        "flex flex-col gap-1.5",
+                        editandoVideo ? "md:col-span-2" : "",
+                      ].join(" ")}
+                    >
                       <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Título
                       </label>
@@ -849,6 +856,8 @@ export default function RecursosPage() {
                       />
                     </div>
 
+                    {!editandoVideo && (
+                      <>
                     <div className="hidden">
                       <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Nombre del recurso
@@ -970,6 +979,8 @@ export default function RecursosPage() {
                           className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
                         />
                       </div>
+                    )}
+                      </>
                     )}
                   </div>
 
@@ -1285,19 +1296,17 @@ export default function RecursosPage() {
 
                               {!campanaFinalizada && (
                                 <>
-                                  {!esVideoGeneradoPorIA(recurso) && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        abrirFormularioEditar(recurso)
-                                      }
-                                      className="h-8 gap-1 rounded-lg px-2.5 text-xs"
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" />
-                                      Editar
-                                    </Button>
-                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      abrirFormularioEditar(recurso)
+                                    }
+                                    className="h-8 gap-1 rounded-lg px-2.5 text-xs"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                    Editar
+                                  </Button>
 
                                   {recurso.estado === "activo" ? (
                                     <Button
