@@ -507,7 +507,7 @@ export default function RecursosPage() {
       {/* ── HEADER ── */}
       <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-        <div className="relative flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+        <div className="relative p-6">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20 shadow-sm">
               <Layers className="h-5 w-5" />
@@ -523,15 +523,6 @@ export default function RecursosPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            onClick={abrirFormularioCrear}
-            disabled={!campanaSeleccionada || campanaFinalizada}
-            className="h-10 gap-2 rounded-xl px-5 text-sm font-medium self-start md:self-center"
-          >
-            <Plus className="h-4 w-4" />
-            Agregar recurso
-          </Button>
         </div>
       </header>
 
@@ -829,7 +820,6 @@ export default function RecursosPage() {
                       >
                         <option value="copy">Idea de campaña</option>
                         <option value="imagen">Imagen</option>
-                        <option value="video">Video</option>
                       </select>
                     </div>
                     )}
@@ -919,11 +909,7 @@ export default function RecursosPage() {
                             </label>
                             <input
                               type="file"
-                              accept={
-                                form.tipo === "imagen"
-                                  ? ".jpg,.jpeg,.png,.webp"
-                                  : ".mp4,.webm,.mov"
-                              }
+                              accept=".jpg,.jpeg,.png,.webp"
                               onChange={(e) => {
                                 const archivo = e.target.files?.[0] ?? null;
                                 setForm((prev) => ({
@@ -943,8 +929,7 @@ export default function RecursosPage() {
                               className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                             />
                             <p className="text-xs text-muted-foreground">
-                              Imagen: jpg, jpeg, png, webp · Video: mp4, webm,
-                              mov.
+                              Imagen: jpg, jpeg, png, webp.
                             </p>
                           </div>
                         )}

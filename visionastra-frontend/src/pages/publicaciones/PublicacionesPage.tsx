@@ -70,7 +70,7 @@ const formInicial: FormState = {
   titulo: "",
   copyTexto: "",
   plataforma: "youtube",
-  privacidad: "unlisted",
+  privacidad: "private",
   estado: "borrador",
 };
 
@@ -86,12 +86,6 @@ const tiposRecurso: Record<Recurso["tipo"], string> = {
   video: "Video",
   documento: "Archivo",
   copy: "Copy",
-};
-
-const privacidadLabel: Record<PrivacidadPublicacion, string> = {
-  private: "Privado",
-  unlisted: "No listado",
-  public: "Publico",
 };
 
 const estadoLabel: Record<EstadoPublicacion, string> = {
@@ -248,8 +242,7 @@ export default function PublicacionesPage() {
     if (!campanaSeleccionada) return [];
 
     return publicaciones.filter(
-      (publicacion) =>
-        publicacion.idCampana === campanaSeleccionada.idCampana
+      (publicacion) => publicacion.idCampana === campanaSeleccionada.idCampana
     );
   }, [campanaSeleccionada, publicaciones]);
 
@@ -289,10 +282,7 @@ export default function PublicacionesPage() {
       );
     } catch (error: unknown) {
       toast.error(
-        obtenerMensajeError(
-          error,
-          "No se pudieron cargar las publicaciones"
-        )
+        obtenerMensajeError(error, "No se pudieron cargar las publicaciones")
       );
     } finally {
       setCargandoPublicaciones(false);
@@ -427,7 +417,8 @@ export default function PublicacionesPage() {
   function abrirFormularioEditar(publicacion: Publicacion) {
     if (!puedeEditarPublicacion(publicacion)) {
       toast.error("Esta publicación ya no se puede editar", {
-        description: "Las publicaciones enviadas, publicadas o canceladas quedan bloqueadas.",
+        description:
+          "Las publicaciones enviadas, publicadas o canceladas quedan bloqueadas.",
       });
       return;
     }
@@ -440,7 +431,7 @@ export default function PublicacionesPage() {
       titulo: publicacion.titulo ?? "",
       copyTexto: publicacion.copyTexto ?? "",
       plataforma: "youtube",
-      privacidad: publicacion.privacidad ?? "unlisted",
+      privacidad: "private",
       estado:
         publicacion.estado === "lista" || publicacion.estado === "borrador"
           ? publicacion.estado
@@ -496,7 +487,9 @@ export default function PublicacionesPage() {
     }
 
     if (form.estado === "lista" && !form.copyTexto.trim()) {
-      toast.error("Agrega una descripción antes de dejar la publicación lista.");
+      toast.error(
+        "Agrega una descripción antes de dejar la publicación lista."
+      );
       return false;
     }
 
@@ -514,7 +507,7 @@ export default function PublicacionesPage() {
       titulo: form.titulo.trim(),
       copyTexto: form.copyTexto.trim() || null,
       plataforma: form.plataforma,
-      privacidad: form.privacidad,
+      privacidad: "private",
       estado: form.estado,
       fechaProgramada: null,
     };
@@ -528,10 +521,7 @@ export default function PublicacionesPage() {
       const payload = construirRequest();
 
       if (publicacionEditando) {
-        await actualizarPublicacion(
-          publicacionEditando.idPublicacion,
-          payload
-        );
+        await actualizarPublicacion(publicacionEditando.idPublicacion, payload);
         toast.success("Publicación actualizada correctamente");
       } else {
         await crearPublicacion(payload);
@@ -552,7 +542,8 @@ export default function PublicacionesPage() {
   async function manejarCancelarPublicacion(publicacion: Publicacion) {
     if (!puedeCancelarPublicacion(publicacion)) {
       toast.error("Esta publicación no se puede cancelar", {
-        description: "Las publicaciones enviadas, publicadas o canceladas quedan bloqueadas.",
+        description:
+          "Las publicaciones enviadas, publicadas o canceladas quedan bloqueadas.",
       });
       return;
     }
@@ -601,7 +592,9 @@ export default function PublicacionesPage() {
     }
 
     if (!puedeEnviarPublicacionAN8n(publicacion)) {
-      toast.error("Solo puedes enviar publicaciones listas con video asociado.");
+      toast.error(
+        "Solo puedes enviar publicaciones listas con video asociado."
+      );
       return;
     }
 
@@ -664,7 +657,6 @@ export default function PublicacionesPage() {
               </p>
             </div>
           </div>
-
         </div>
       </header>
 
@@ -805,6 +797,12 @@ export default function PublicacionesPage() {
             </div>
           ) : (
             <>
+              {campanaSeleccionada.estado.toLowerCase() !== "activa" && (
+                <div className="flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+                  Campaña inactiva. Actívala para publicar.
+                </div>
+              )}
+
               {mostrarFormulario && (
                 <div className="overflow-hidden rounded-2xl border border-border/60 bg-background/70 shadow-sm">
                   <div className="flex items-start justify-between gap-4 border-b border-border/50 bg-muted/20 px-5 py-4">
@@ -862,11 +860,13 @@ export default function PublicacionesPage() {
                               </option>
                             ))}
                           </select>
-                          {!cargandoRecursos && videosDisponibles.length === 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              Esta campaña todavía no tiene videos disponibles.
-                            </span>
-                          )}
+                          {!cargandoRecursos &&
+                            videosDisponibles.length === 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                Esta campaña todavía no tiene videos
+                                disponibles.
+                              </span>
+                            )}
                         </Field>
 
                         <Field label="Título" required>
@@ -899,6 +899,21 @@ export default function PublicacionesPage() {
                           </select>
                         </Field>
 
+                        <Field label="Privacidad" required>
+                          <select
+                            value={form.privacidad}
+                            onChange={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                privacidad: "private",
+                              }))
+                            }
+                            className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                          >
+                            <option value="private">Privado</option>
+                          </select>
+                        </Field>
+
                         <div className="md:col-span-2">
                           <Field
                             label="Descripción / caption"
@@ -919,31 +934,14 @@ export default function PublicacionesPage() {
                           </Field>
                         </div>
 
-                        <Field label="Privacidad YouTube" required>
-                          <select
-                            value={form.privacidad}
-                            onChange={(event) =>
-                              setForm((prev) => ({
-                                ...prev,
-                                privacidad: event.target
-                                  .value as PrivacidadPublicacion,
-                              }))
-                            }
-                            className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-                          >
-                            <option value="private">Private</option>
-                            <option value="unlisted">Unlisted</option>
-                            <option value="public">Public</option>
-                          </select>
-                        </Field>
-
                         <Field label="Estado" required>
                           <select
                             value={form.estado}
                             onChange={(event) =>
                               setForm((prev) => ({
                                 ...prev,
-                                estado: event.target.value as FormState["estado"],
+                                estado: event.target
+                                  .value as FormState["estado"],
                               }))
                             }
                             className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
@@ -1019,7 +1017,7 @@ export default function PublicacionesPage() {
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-border/60 bg-background/50 shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[920px] text-sm">
+                    <table className="w-full min-w-[820px] text-sm">
                       <thead>
                         <tr className="border-b border-border/40 bg-muted/20">
                           <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1030,9 +1028,6 @@ export default function PublicacionesPage() {
                           </th>
                           <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Plataforma
-                          </th>
-                          <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Privacidad
                           </th>
                           <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Estado
@@ -1056,161 +1051,156 @@ export default function PublicacionesPage() {
                             yaExisteEnvioMismoVideoPlataforma(publicacion);
 
                           return (
-                          <tr
-                            key={publicacion.idPublicacion}
-                            className="transition-colors hover:bg-muted/20"
-                          >
-                            <td className="px-5 py-3.5">
-                              <p className="font-medium leading-snug text-foreground">
-                                {publicacion.titulo || "Sin título"}
-                              </p>
-                              <p className="mt-0.5 line-clamp-1 max-w-[260px] text-xs text-muted-foreground">
-                                {publicacion.copyTexto ||
-                                  "Sin descripción registrada"}
-                              </p>
-                              {(publicacion.estado === "error" ||
-                                publicacion.mensajeError) &&
-                                publicacion.mensajeError && (
-                                  <p className="mt-1 max-w-[320px] rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs text-destructive">
-                                    {publicacion.mensajeError}
-                                  </p>
-                                )}
-                              {puedeEnviarAN8n && envioDuplicado && (
-                                  <p className="mt-1 max-w-[320px] rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
-                                    Este video ya fue enviado a esta
-                                    plataforma.
-                                  </p>
-                                )}
-                            </td>
+                            <tr
+                              key={publicacion.idPublicacion}
+                              className="transition-colors hover:bg-muted/20"
+                            >
+                              <td className="px-5 py-3.5">
+                                <p className="font-medium leading-snug text-foreground">
+                                  {publicacion.titulo || "Sin título"}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 max-w-[260px] text-xs text-muted-foreground">
+                                  {publicacion.copyTexto ||
+                                    "Sin descripción registrada"}
+                                </p>
+                              </td>
 
-                            <td className="px-4 py-3.5">
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                {obtenerIconoRecurso(publicacion.tipoRecurso)}
-                                <span className="max-w-[180px] truncate text-xs font-medium">
-                                  {publicacion.tituloRecurso ||
-                                    "Sin recurso asociado"}
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  {obtenerIconoRecurso(publicacion.tipoRecurso)}
+                                  <span className="max-w-[180px] truncate text-xs font-medium">
+                                    {publicacion.tituloRecurso ||
+                                      "Sin recurso asociado"}
+                                  </span>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3.5">
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs font-medium capitalize text-muted-foreground">
+                                  <PlayCircle className="h-3.5 w-3.5" />
+                                  {publicacion.plataforma}
                                 </span>
-                              </div>
-                            </td>
+                              </td>
 
-                            <td className="px-4 py-3.5">
-                              <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs font-medium capitalize text-muted-foreground">
-                                <PlayCircle className="h-3.5 w-3.5" />
-                                {publicacion.plataforma}
-                              </span>
-                            </td>
-
-                            <td className="px-4 py-3.5 text-xs text-muted-foreground">
-                              {publicacion.privacidad
-                                ? privacidadLabel[publicacion.privacidad]
-                                : "Sin privacidad"}
-                            </td>
-
-                            <td className="px-4 py-3.5">
-                              <Badge
-                                variant="outline"
-                                className={`rounded-full px-2.5 text-[11px] font-medium ${claseEstadoPublicacion(
-                                  publicacion.estado
-                                )}`}
-                              >
-                                {estadoLabel[publicacion.estado]}
-                              </Badge>
-                              {publicacion.urlPublicacion && (
-                                <a
-                                  href={publicacion.urlPublicacion}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                              <td className="px-4 py-3.5">
+                                <Badge
+                                  variant="outline"
+                                  className={`rounded-full px-2.5 text-[11px] font-medium ${claseEstadoPublicacion(
+                                    publicacion.estado
+                                  )}`}
                                 >
-                                  Ver publicación
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              )}
-                            </td>
+                                  {estadoLabel[publicacion.estado]}
+                                </Badge>
+                                {publicacion.urlPublicacion && (
+                                  <a
+                                    href={publicacion.urlPublicacion}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                  >
+                                    Ver publicación
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                                {publicacion.mensajeError && (
+                                  <button
+                                    type="button"
+                                    title={publicacion.mensajeError}
+                                    className="mt-1.5 block text-xs font-medium text-destructive hover:underline"
+                                  >
+                                    Ver detalle
+                                  </button>
+                                )}
+                              </td>
 
-                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">
-                              {formatearFecha(publicacion.fechaCreacion)}
-                            </td>
+                              <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">
+                                {formatearFecha(publicacion.fechaCreacion)}
+                              </td>
 
-                            <td className="px-4 py-3.5">
-                              <div className="flex items-center justify-end gap-1">
-                                {puedeEnviarAN8n && (
-                                  <div className="flex flex-col items-end gap-1">
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center justify-end gap-1">
+                                  {puedeEnviarAN8n && (
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          void manejarEnviarPublicacionAN8n(
+                                            publicacion
+                                          )
+                                        }
+                                        disabled={
+                                          enviandoId ===
+                                            publicacion.idPublicacion ||
+                                          envioDuplicado ||
+                                          !campanaActiva
+                                        }
+                                        className="h-8 gap-1 rounded-lg px-2.5 text-xs text-primary hover:bg-primary/10 hover:text-primary disabled:text-muted-foreground"
+                                      >
+                                        {enviandoId ===
+                                        publicacion.idPublicacion ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                          <Send className="h-3.5 w-3.5" />
+                                        )}
+                                        {enviandoId ===
+                                        publicacion.idPublicacion
+                                          ? "Publicando..."
+                                          : "Publicar"}
+                                      </Button>
+                                      {envioDuplicado && (
+                                        <span className="text-[11px] text-muted-foreground">
+                                          Video ya enviado
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      abrirFormularioEditar(publicacion)
+                                    }
+                                    disabled={
+                                      !puedeEditarPublicacion(publicacion)
+                                    }
+                                    className="h-8 gap-1 rounded-lg px-2.5 text-xs"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                    Editar
+                                  </Button>
+
+                                  {puedeCancelarPublicacion(publicacion) && (
                                     <Button
                                       type="button"
                                       variant="ghost"
                                       size="sm"
                                       onClick={() =>
-                                        void manejarEnviarPublicacionAN8n(
+                                        void manejarCancelarPublicacion(
                                           publicacion
                                         )
                                       }
                                       disabled={
-                                        enviandoId ===
-                                          publicacion.idPublicacion ||
-                                        envioDuplicado ||
-                                        !campanaActiva
+                                        cancelandoId ===
+                                        publicacion.idPublicacion
                                       }
-                                      className="h-8 gap-1 rounded-lg px-2.5 text-xs text-primary hover:bg-primary/10 hover:text-primary"
+                                      className="h-8 gap-1 rounded-lg px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                                     >
-                                      {enviandoId ===
+                                      {cancelandoId ===
                                       publicacion.idPublicacion ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                       ) : (
-                                        <Send className="h-3.5 w-3.5" />
+                                        <Ban className="h-3.5 w-3.5" />
                                       )}
-                                      {enviandoId ===
-                                      publicacion.idPublicacion
-                                        ? "Enviando..."
-                                        : "Enviar a n8n"}
+                                      Cancelar
                                     </Button>
-                                    {!campanaActiva && (
-                                      <span className="max-w-[190px] text-right text-[11px] leading-snug text-muted-foreground">
-                                        Solo puedes enviar publicaciones de
-                                        campañas activas.
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    abrirFormularioEditar(publicacion)
-                                  }
-                                  disabled={!puedeEditarPublicacion(publicacion)}
-                                  className="h-8 gap-1 rounded-lg px-2.5 text-xs"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                  Editar
-                                </Button>
-
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    void manejarCancelarPublicacion(publicacion)
-                                  }
-                                  disabled={
-                                    !puedeCancelarPublicacion(publicacion) ||
-                                    cancelandoId === publicacion.idPublicacion
-                                  }
-                                  className="h-8 gap-1 rounded-lg px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  {cancelandoId ===
-                                  publicacion.idPublicacion ? (
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  ) : (
-                                    <Ban className="h-3.5 w-3.5" />
                                   )}
-                                  Cancelar
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
+                                </div>
+                              </td>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1297,9 +1287,7 @@ function PreviewPanel({
           <p className="mt-3 text-sm font-medium text-foreground">
             Preview no disponible
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {preview.error}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{preview.error}</p>
         </div>
       ) : preview?.recurso.tipo === "imagen" && preview.url ? (
         <div className="overflow-hidden rounded-2xl border border-border bg-muted/20">

@@ -233,9 +233,7 @@ export default function GeneradorIAPage() {
     return recursos.filter(
       (recurso) =>
         recurso.estado === "activo" &&
-        (recurso.tipo === "copy" ||
-          recurso.tipo === "imagen" ||
-          recurso.tipo === "video")
+        (recurso.tipo === "copy" || recurso.tipo === "imagen")
     );
   }, [recursos]);
 
@@ -479,8 +477,13 @@ export default function GeneradorIAPage() {
     const recursoSeleccionado = recursos.find(
       (recurso) => recurso.idRecurso === idRecurso
     );
+    const tipoRecurso = recursoSeleccionado?.tipo?.toLowerCase();
 
-    if (recursoSeleccionado?.tipo?.toLowerCase() === "imagen") {
+    if (tipoRecurso !== "copy" && tipoRecurso !== "imagen") {
+      return;
+    }
+
+    if (tipoRecurso === "imagen") {
       setPreviewImagenReferencia(null);
     }
 
@@ -768,8 +771,8 @@ export default function GeneradorIAPage() {
                   2. Recursos para IA
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Para esta fase usa principalmente Brief creativo. Imagen y
-                  video se dejan como referencia.
+                  Para esta fase usa principalmente Brief creativo e Imagen
+                  como referencia.
                 </p>
               </div>
 

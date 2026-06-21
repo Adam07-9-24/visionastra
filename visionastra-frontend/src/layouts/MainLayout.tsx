@@ -28,11 +28,11 @@ import {
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/sesiones", label: "Sesiones", icon: Shield },
   { to: "/campanas", label: "Campañas", icon: Megaphone },
   { to: "/recursos", label: "Recursos", icon: FolderOpen },
   { to: "/generador-ia", label: "Generador IA", icon: WandSparkles },
   { to: "/publicaciones", label: "Publicaciones", icon: Send },
+  { to: "/sesiones", label: "Sesiones", icon: Shield },
 ];
 
 export default function MainLayout() {
