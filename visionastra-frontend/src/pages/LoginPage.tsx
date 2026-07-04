@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "@/services/authService";
 import loginHero from "@/assets/visionastra-login-hero.png";
 import VisionAstraLogo from "@/components/branding/VisionAstraLogo";
@@ -171,6 +171,22 @@ export default function LoginPage() {
               >
                 Ingresar
               </Button>
+
+              <p
+                className={`text-center text-sm ${
+                  darkMode ? "text-slate-300" : "text-slate-600"
+                }`}
+              >
+                ¿No tienes cuenta?{" "}
+                <Link
+                  to="/register"
+                  className={`font-medium transition hover:underline ${
+                    darkMode ? "text-blue-300" : "text-blue-600"
+                  }`}
+                >
+                  Crear cuenta
+                </Link>
+              </p>
             </CardContent>
           </Card>
         </section>
