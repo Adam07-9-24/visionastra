@@ -1,75 +1,134 @@
-# React + TypeScript + Vite
+# VisionAstra Admin Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Panel administrativo web de VisionAstra, desarrollado para supervisar usuarios, campañas, generaciones mediante inteligencia artificial y publicaciones realizadas desde la plataforma principal.
 
-Currently, two official plugins are available:
+Este frontend forma parte del monorepo de VisionAstra y se comunica exclusivamente con el backend administrativo desarrollado en Django.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Descripción
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+VisionAstra Admin permite que los administradores internos consulten información general de la plataforma y supervisen sus principales módulos.
 
-## Expanding the ESLint configuration
+La aplicación utiliza autenticación administrativa mediante sesiones de Django y protección CSRF.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Su propósito es únicamente la supervisión y administración interna.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tecnologías utilizadas
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- Axios
+- React Router DOM
+- Lucide React
+- Sonner
 
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Módulos disponibles
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Dashboard
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Muestra un resumen general de VisionAstra:
 
+- total de usuarios;
+- usuarios activos;
+- campañas creadas;
+- publicaciones;
+- generaciones realizadas mediante IA.
+
+### Usuarios
+
+Permite:
+
+- listar usuarios;
+- buscar usuarios;
+- filtrar por estado;
+- consultar información del usuario;
+- bloquear cuentas;
+- activar cuentas.
+
+Las operaciones de bloqueo y activación son procesadas mediante Django Admin y el backend principal de Spring Boot.
+
+### Campañas
+
+Permite:
+
+- listar campañas;
+- buscar por campaña, propietario o correo;
+- filtrar por estado;
+- filtrar por propietario;
+- consultar el detalle de una campaña;
+- revisar la cantidad de recursos;
+- revisar la cantidad de publicaciones.
+
+Este módulo es únicamente de consulta.
+
+### Generaciones IA
+
+Permite:
+
+- listar generaciones realizadas mediante IA;
+- buscar por campaña, usuario o correo;
+- filtrar por estado;
+- filtrar por usuario;
+- paginar resultados.
+
+La tabla muestra:
+
+- identificador de generación;
+- campaña;
+- usuario;
+- estado;
+- fecha.
+
+Este módulo no permite editar, eliminar, cancelar ni volver a generar contenido.
+
+### Publicaciones
+
+Permite:
+
+- listar publicaciones;
+- buscar por título, campaña, usuario o correo;
+- filtrar por estado;
+- filtrar por usuario;
+- paginar resultados;
+- visualizar mensajes de error comprensibles.
+
+La tabla muestra:
+
+- título;
+- campaña;
+- usuario;
+- estado;
+- fecha.
+
+El estado interno `enviada` se presenta visualmente como **Publicada**, de acuerdo con el flujo actual de VisionAstra.
+
+Este módulo no permite editar, eliminar, reenviar ni cancelar publicaciones.
+
+---
+
+## Requisitos
+
+Antes de iniciar el proyecto se necesita:
+
+- Node.js
+- npm
+- backend Django Admin ejecutándose
+- base de datos MySQL de VisionAstra disponible
+
+---
+
+## Instalación
+
+Desde la carpeta del proyecto:
+
+```bash
+npm install
 ```
