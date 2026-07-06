@@ -4,6 +4,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tecsup.visionastra.mobile.BuildConfig
 import com.tecsup.visionastra.mobile.data.remote.api.AuthApi
+import com.tecsup.visionastra.mobile.data.remote.api.CampaignApi
+import com.tecsup.visionastra.mobile.data.remote.api.ResourceApi
 import com.tecsup.visionastra.mobile.data.remote.api.SessionApi
 import dagger.Module
 import dagger.Provides
@@ -26,6 +28,7 @@ object NetworkModule {
     @Singleton
     fun provideMoshi(): Moshi =
         Moshi.Builder()
+            .add(BigDecimalJsonAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
 
@@ -123,6 +126,16 @@ object NetworkModule {
     @Singleton
     fun provideSessionApi(@AuthenticatedRetrofit retrofit: Retrofit): SessionApi =
         retrofit.create(SessionApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCampaignApi(@AuthenticatedRetrofit retrofit: Retrofit): CampaignApi =
+        retrofit.create(CampaignApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideResourceApi(@AuthenticatedRetrofit retrofit: Retrofit): ResourceApi =
+        retrofit.create(ResourceApi::class.java)
 }
 
 @Qualifier

@@ -28,6 +28,7 @@ import com.tecsup.visionastra.mobile.core.session.AuthUser
 fun DashboardScreen(
     user: AuthUser,
     isLoggingOut: Boolean,
+    onCampaignsClick: () -> Unit,
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -84,6 +85,13 @@ fun DashboardScreen(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onCampaignsClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Ver campañas")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onLogoutClick,
                 modifier = Modifier.fillMaxWidth(),
