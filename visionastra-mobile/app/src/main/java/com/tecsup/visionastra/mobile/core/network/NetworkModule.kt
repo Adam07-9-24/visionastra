@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tecsup.visionastra.mobile.BuildConfig
 import com.tecsup.visionastra.mobile.data.remote.api.AuthApi
+import com.tecsup.visionastra.mobile.data.remote.api.AiGenerationApi
 import com.tecsup.visionastra.mobile.data.remote.api.CampaignApi
 import com.tecsup.visionastra.mobile.data.remote.api.ResourceApi
 import com.tecsup.visionastra.mobile.data.remote.api.SessionApi
@@ -136,6 +137,29 @@ object NetworkModule {
     @Singleton
     fun provideResourceApi(@AuthenticatedRetrofit retrofit: Retrofit): ResourceApi =
         retrofit.create(ResourceApi::class.java)
+
+    @Provides
+    @Singleton
+    @AiRetrofit
+    fun provideAiRetrofit(
+        @AuthenticatedClient okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(NetworkConstants.BASE_URL)
+            .client(
+                okHttpClient.newBuilder()
+                    .readTimeout(10, TimeUnit.MINUTES)
+                    .build()
+            )
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideAiGenerationApi(@AiRetrofit retrofit: Retrofit): AiGenerationApi =
+        retrofit.create(AiGenerationApi::class.java)
 }
 
 @Qualifier
@@ -152,3 +176,6 @@ annotation class RefreshRetrofit
 
 @Qualifier
 annotation class RefreshAuthApi
+
+@Qualifier
+annotation class AiRetrofit

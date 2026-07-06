@@ -1,5 +1,6 @@
 package com.tecsup.visionastra.mobile.ui.resources
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,7 @@ data class ResourceDetailUiState(
     val isLoading: Boolean = false,
     val isUpdatingTitle: Boolean = false,
     val isDeleting: Boolean = false,
+    val isDownloadingVideo: Boolean = false,
     val errorMessage: String? = null,
     val snackbarMessage: String? = null,
     val deleted: Boolean = false
@@ -99,6 +101,24 @@ class ResourceDetailViewModel @Inject constructor(
                 }
                 is ResourceResult.Error -> _uiState.update {
                     it.copy(isDeleting = false, errorMessage = result.message)
+                }
+            }
+        }
+    }
+
+    fun downloadVideo(destination: Uri) {
+        if (_uiState.value.isDownloadingVideo) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDownloadingVideo = true, errorMessage = null) }
+            when (val result = resourceRepository.downloadFileToUri(idResource, destination)) {
+                is ResourceResult.Success -> _uiState.update {
+                    it.copy(
+                        isDownloadingVideo = false,
+                        snackbarMessage = "Video descargado correctamente"
+                    )
+                }
+                is ResourceResult.Error -> _uiState.update {
+                    it.copy(isDownloadingVideo = false, errorMessage = result.message)
                 }
             }
         }

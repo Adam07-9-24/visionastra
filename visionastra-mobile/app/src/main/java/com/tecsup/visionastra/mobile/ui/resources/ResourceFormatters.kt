@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 
 enum class ResourceType(val value: String, val label: String) {
     Image("imagen", "Imagen"),
-    Copy("copy", "Copy"),
+    Copy("copy", "Idea"),
     Video("video", "Video"),
     Document("documento", "Documento");
 
@@ -25,7 +25,7 @@ data class ResourceTypeFilter(
 val resourceTypeFilters = listOf(
     ResourceTypeFilter("Todos", null),
     ResourceTypeFilter("Imágenes", ResourceType.Image.value),
-    ResourceTypeFilter("Copy", ResourceType.Copy.value),
+    ResourceTypeFilter("Ideas", ResourceType.Copy.value),
     ResourceTypeFilter("Videos", ResourceType.Video.value)
 )
 

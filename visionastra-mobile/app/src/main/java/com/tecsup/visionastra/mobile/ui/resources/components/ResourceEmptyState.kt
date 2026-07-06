@@ -27,7 +27,7 @@ fun ResourceEmptyState() {
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Sube una imagen o crea un copy para empezar.",
+            text = "Sube una imagen o crea una idea para empezar.",
             modifier = Modifier.padding(top = 8.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant

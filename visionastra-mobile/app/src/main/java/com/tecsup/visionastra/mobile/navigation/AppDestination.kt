@@ -27,4 +27,12 @@ sealed class AppDestination(val route: String) {
     data object ResourceVideo : AppDestination("resources/{idRecurso}/video") {
         fun createRoute(idRecurso: Int): String = "resources/$idRecurso/video"
     }
+    data object AiGenerations : AppDestination("ai")
+    data object NewAiGeneration : AppDestination("ai/new")
+    data object NewAiGenerationForCampaign : AppDestination("ai/new/{idCampana}") {
+        fun createRoute(idCampana: Int): String = "ai/new/$idCampana"
+    }
+    data object AiGenerationDetail : AppDestination("ai/{idGeneracion}") {
+        fun createRoute(idGeneracion: Int): String = "ai/$idGeneracion"
+    }
 }

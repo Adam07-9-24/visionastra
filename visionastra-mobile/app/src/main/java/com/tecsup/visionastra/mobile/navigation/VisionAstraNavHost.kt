@@ -23,6 +23,12 @@ import com.tecsup.visionastra.mobile.core.session.SessionManager
 import com.tecsup.visionastra.mobile.core.session.SessionState
 import com.tecsup.visionastra.mobile.ui.auth.LoginScreen
 import com.tecsup.visionastra.mobile.ui.auth.LoginViewModel
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationDetailScreen
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationDetailViewModel
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationFormScreen
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationFormViewModel
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationListScreen
+import com.tecsup.visionastra.mobile.ui.ai.AiGenerationListViewModel
 import com.tecsup.visionastra.mobile.ui.campaigns.CampaignDetailScreen
 import com.tecsup.visionastra.mobile.ui.campaigns.CampaignDetailViewModel
 import com.tecsup.visionastra.mobile.ui.campaigns.CampaignFormScreen
@@ -146,6 +152,9 @@ fun VisionAstraNavHost(
                     isLoggingOut = isLoggingOut,
                     onCampaignsClick = {
                         navController.navigate(AppDestination.Campaigns.route)
+                    },
+                    onAiGeneratorClick = {
+                        navController.navigate(AppDestination.AiGenerations.route)
                     },
                     onLogoutClick = {
                         if (!isLoggingOut) {
@@ -275,6 +284,11 @@ fun VisionAstraNavHost(
                     },
                     onResourcesClick = { idCampana ->
                         navController.navigate(AppDestination.CampaignResources.createRoute(idCampana))
+                    },
+                    onGenerateAiClick = { idCampana, isActive ->
+                        if (isActive) {
+                            navController.navigate(AppDestination.NewAiGenerationForCampaign.createRoute(idCampana))
+                        }
                     },
                     onStatusChange = viewModel::changeStatus,
                     onDeleteConfirm = viewModel::deleteCampaign,
@@ -412,7 +426,7 @@ fun VisionAstraNavHost(
                     if (state.saved) {
                         navController.previousBackStackEntry
                             ?.savedStateHandle
-                            ?.set("resource_message", "Copy creado")
+                            ?.set("resource_message", "Idea creada")
                         navController.popBackStack()
                     }
                 }
@@ -481,13 +495,133 @@ fun VisionAstraNavHost(
 
                 if (resource != null && fileUrl != null) {
                     VideoPlayerScreen(
+                        idResource = resource.idRecurso,
                         title = resource.displayTitle(),
                         fileUrl = fileUrl,
-                        onBackClick = { navController.popBackStack() }
+                        isDownloading = state.isDownloadingVideo,
+                        errorMessage = state.errorMessage,
+                        snackbarMessage = state.snackbarMessage,
+                        onBackClick = { navController.popBackStack() },
+                        onDownloadVideo = viewModel::downloadVideo,
+                        onSnackbarShown = viewModel::onSnackbarShown
                     )
                 } else {
                     SplashScreen()
                 }
+            }
+        }
+
+        composable(AppDestination.AiGenerations.route) {
+            RequireAuthenticated(sessionState, onUnauthenticated = {
+                navController.navigate(AppDestination.Login.route) {
+                    popUpTo(AppDestination.AiGenerations.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }) {
+                val viewModel: AiGenerationListViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+                OnResumeEffect { viewModel.load() }
+
+                AiGenerationListScreen(
+                    state = state,
+                    onBackClick = { navController.popBackStack() },
+                    onNewClick = { navController.navigate(AppDestination.NewAiGeneration.route) },
+                    onGenerationClick = { idGeneracion ->
+                        navController.navigate(AppDestination.AiGenerationDetail.createRoute(idGeneracion))
+                    },
+                    onRetryClick = viewModel::load
+                )
+            }
+        }
+
+        composable(AppDestination.NewAiGeneration.route) {
+            RequireAuthenticated(sessionState, onUnauthenticated = {
+                navController.navigate(AppDestination.Login.route) {
+                    popUpTo(AppDestination.NewAiGeneration.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }) {
+                val viewModel: AiGenerationFormViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+                LaunchedEffect(state.createdGenerationId) {
+                    val id = state.createdGenerationId
+                    if (id != null) {
+                        navController.navigate(AppDestination.AiGenerationDetail.createRoute(id)) {
+                            popUpTo(AppDestination.NewAiGeneration.route) { inclusive = true }
+                        }
+                    }
+                }
+
+                AiGenerationFormScreen(
+                    state = state,
+                    onBackClick = { navController.popBackStack() },
+                    onCampaignSelected = viewModel::onCampaignSelected,
+                    onResourceToggle = viewModel::toggleResource,
+                    onPromptChange = viewModel::onPromptChange,
+                    onCreateClick = viewModel::createGeneration
+                )
+            }
+        }
+
+        composable(
+            route = AppDestination.NewAiGenerationForCampaign.route,
+            arguments = listOf(navArgument("idCampana") { type = NavType.IntType })
+        ) {
+            RequireAuthenticated(sessionState, onUnauthenticated = {
+                navController.navigate(AppDestination.Login.route) {
+                    popUpTo(AppDestination.NewAiGenerationForCampaign.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }) {
+                val viewModel: AiGenerationFormViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+                LaunchedEffect(state.createdGenerationId) {
+                    val id = state.createdGenerationId
+                    if (id != null) {
+                        navController.navigate(AppDestination.AiGenerationDetail.createRoute(id)) {
+                            popUpTo(AppDestination.NewAiGenerationForCampaign.route) { inclusive = true }
+                        }
+                    }
+                }
+
+                AiGenerationFormScreen(
+                    state = state,
+                    onBackClick = { navController.popBackStack() },
+                    onCampaignSelected = viewModel::onCampaignSelected,
+                    onResourceToggle = viewModel::toggleResource,
+                    onPromptChange = viewModel::onPromptChange,
+                    onCreateClick = viewModel::createGeneration
+                )
+            }
+        }
+
+        composable(
+            route = AppDestination.AiGenerationDetail.route,
+            arguments = listOf(navArgument("idGeneracion") { type = NavType.IntType })
+        ) {
+            RequireAuthenticated(sessionState, onUnauthenticated = {
+                navController.navigate(AppDestination.Login.route) {
+                    popUpTo(AppDestination.AiGenerationDetail.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }) {
+                val viewModel: AiGenerationDetailViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+                AiGenerationDetailScreen(
+                    state = state,
+                    onBackClick = { navController.popBackStack() },
+                    onCreatePromptClick = viewModel::preparePrompt,
+                    onGenerateVideoRequest = viewModel::showGenerateVideoConfirmation,
+                    onGenerateVideoConfirm = viewModel::generateVideo,
+                    onGenerateVideoCancel = viewModel::dismissGenerateVideoConfirmation,
+                    onPlayVideoClick = { idRecurso ->
+                        navController.navigate(AppDestination.ResourceVideo.createRoute(idRecurso))
+                    }
+                )
             }
         }
     }

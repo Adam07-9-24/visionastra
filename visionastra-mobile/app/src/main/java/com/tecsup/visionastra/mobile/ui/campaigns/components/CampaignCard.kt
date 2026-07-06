@@ -1,19 +1,20 @@
 package com.tecsup.visionastra.mobile.ui.campaigns.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,53 +28,103 @@ fun CampaignCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    val colors = CampaignCardColors()
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        color = colors.surface,
+        border = BorderStroke(1.dp, colors.border),
+        shadowElevation = 3.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(17.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Text(
                         text = campaign.nombre,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (!campaign.objetivo.isNullOrBlank()) {
-                        Text(
-                            text = campaign.objetivo,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = campaign.objetivo?.takeIf { it.isNotBlank() } ?: "Sin objetivo definido",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
                 CampaignStatusChip(status = campaign.estado)
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Presupuesto: ${campaign.presupuesto.formatBudget()}",
-                style = MaterialTheme.typography.bodyMedium
+            InfoLine(
+                label = "Presupuesto",
+                value = campaign.presupuesto.formatBudget(),
+                colors = colors
             )
-            Text(
-                text = "Inicio: ${campaign.fechaInicio.formatCampaignDate()} · Fin: ${campaign.fechaFin.formatCampaignDate()}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                InfoLine(
+                    label = "Inicio",
+                    value = campaign.fechaInicio.formatCampaignDate(),
+                    colors = colors,
+                    modifier = Modifier.weight(1f)
+                )
+                InfoLine(
+                    label = "Fin",
+                    value = campaign.fechaFin.formatCampaignDate(),
+                    colors = colors,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun InfoLine(
+    label: String,
+    value: String,
+    colors: CampaignCardColors,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.textSecondary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.textPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private data class CampaignCardColors(
+    val surface: Color = Color.White,
+    val border: Color = Color(0xFFDCE5F0),
+    val textPrimary: Color = Color(0xFF0F172A),
+    val textSecondary: Color = Color(0xFF64748B)
+)

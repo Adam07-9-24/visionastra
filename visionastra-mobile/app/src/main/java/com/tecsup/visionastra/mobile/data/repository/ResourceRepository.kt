@@ -18,9 +18,12 @@ import java.io.IOException
 import java.math.BigDecimal
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 sealed interface ResourceResult<out T> {
@@ -111,6 +114,14 @@ class ResourceRepository @Inject constructor(
         }
     }
 
+    suspend fun downloadFileToUri(idResource: Int, destination: Uri): ResourceResult<Unit> =
+        withContext(Dispatchers.IO) {
+            when (val fileResult = getDownloadBody(idResource)) {
+                is ResourceResult.Success -> writeBodyToUri(fileResult.data, destination)
+                is ResourceResult.Error -> fileResult
+            }
+        }
+
     fun fileUrl(idResource: Int): String =
         "${NetworkConstants.BASE_URL}api/recursos/archivo/$idResource"
 
@@ -140,6 +151,29 @@ class ResourceRepository @Inject constructor(
             ResourceResult.Success(body)
         } else {
             ResourceResult.Error("Respuesta vacia del servidor.")
+        }
+    }
+
+    private suspend fun getDownloadBody(idResource: Int): ResourceResult<ResponseBody> =
+        execute { resourceApi.getFile(idResource) }
+
+    private fun writeBodyToUri(body: ResponseBody, destination: Uri): ResourceResult<Unit> {
+        return try {
+            body.use { responseBody ->
+                val resolver = context.contentResolver
+                resolver.openOutputStream(destination)?.use { output ->
+                    responseBody.byteStream().use { input ->
+                        input.copyTo(output)
+                    }
+                } ?: return ResourceResult.Error("No se pudo abrir el destino seleccionado.")
+            }
+            ResourceResult.Success(Unit)
+        } catch (_: SecurityException) {
+            ResourceResult.Error("No se pudo acceder al destino seleccionado.")
+        } catch (_: IOException) {
+            ResourceResult.Error("No se pudo guardar el video. Revisa tu conexion, espacio disponible o destino.")
+        } catch (_: Exception) {
+            ResourceResult.Error("No se pudo descargar el video.")
         }
     }
 
