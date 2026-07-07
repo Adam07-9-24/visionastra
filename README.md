@@ -1559,9 +1559,9 @@ Actualmente VisionAstra cuenta con:
 
 Proyecto desarrollado como parte de la formación en Diseño y Desarrollo de Software.
 
-**Desarrollador:** Yefry Calderón González  
-**Proyecto:** VisionAstra  
-**Institución:** TECSUP
+Yefry Calderón González  
+Sebastian Salas Córdova
+Calep Neyra Taype
 
 ---
 
