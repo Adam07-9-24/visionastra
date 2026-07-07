@@ -1559,9 +1559,10 @@ Actualmente VisionAstra cuenta con:
 
 Proyecto desarrollado como parte de la formación en Diseño y Desarrollo de Software.
 
-Yefry Calderón González  
-Sebastian Salas Córdova
-Calep Neyra Taype
+### Integrantes:
+* Yefry Calderón González
+* Sebastian Salas Córdova
+* Calep Neyra Taype
 
 ---
 
